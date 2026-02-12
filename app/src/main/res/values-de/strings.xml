@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App / General -->
+    <string name="app_logo">TalkBridge App-Logo</string>
+
+    <!-- Navigation / General -->
+    <string name="back_button">Zurück</string>
+    <string name="settings">Einstellungen</string>
+
+    <!-- Main Features -->
+    <string name="transcribe">Transkribieren</string>
+    <string name="translate">Übersetzen</string>
+    <string name="live_translate">Live-Übersetzung</string>
+
+    <!-- Actions / Buttons -->
+    <string name="start_live_translate">Starte Live\nÜbersetzung</string>
+    <string name="start_recording">Aufnahme starten</string>
+    <string name="delete_recording">Aufnahme löschen</string>
+    <string name="switch_languages">Sprachen tauschen</string>
+
+    <!-- Status / Hints -->
+    <string name="listening">Empfangsbereit...</string>
+    <string name="press_microphone_to_speak">Mikrofon drücken, um zu sprechen</string>
+
+    <!-- Screens / Sections -->
+    <string name="transcription">Transkription</string>
+    <string name="choose_language">Sprache auswählen</string>
+    <string name="language_select">Sprachauswahl</string>
+
+    <!-- Languages -->
+    <string name="german">Deutsch</string>
+    <string name="english">Englisch</string>
+    <string name="russian">Russisch</string>
+    <string name="polish">Polnisch</string>
+    <string name="french">Französisch</string>
+    <string name="stop_recording">Aufnahme Stoppen</string>
+    <string name="app_name_on_homescreen">Live Übersetzer</string>
+    <string name="search_language">Sprache suchen</string>
+    <string name="delete">Löschen</string>
+    <string name="source_language">Ausgangssprache</string>
+    <string name="target_language">Zielsprache</string>
+    <string name="all_languages">Alle Sprachen</string>
+    <string name="stop_live_translate">Stoppe Live\nÜbersetzung</string>
+    <string name="permission_dialog_title">Berechtigung erforderlich</string>
+    <string name="permission_dialog_description">Die Mikrofon-Berechtigung wird für Live-Übersetzungen benötigt. Bitte aktivieren Sie diese in den App-Einstellungen.</string>
+    <string name="open_settings">Einstellungen öffnen</string>
+    <string name="cancel">Abbrechen</string>
+</resources>

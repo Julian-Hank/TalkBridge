@@ -1,0 +1,48 @@
+<resources>
+    <string name="app_name" translatable="false">TalkBridge Live</string>
+    <string name="app_logo">TalkBridge App Logo</string>
+    <string name="app_name_on_homescreen">Live Translator</string>
+
+    <!-- Navigation / General -->
+    <string name="back_button">Back</string>
+    <string name="settings">Settings</string>
+
+    <!-- Main Features -->
+    <string name="transcribe">Transcribe</string>
+    <string name="translate">Translate</string>
+    <string name="live_translate">Live Translate</string>
+
+    <!-- Actions / Buttons -->
+    <string name="start_live_translate">Start Live\nTranslate</string>
+    <string name="stop_live_translate">Stop Live\nTranslate</string>
+    <string name="start_recording">Start Recording</string>
+    <string name="delete_recording">Delete Recording</string>
+    <string name="switch_languages">Switch languages</string>
+
+    <!-- Status / Hints -->
+    <string name="listening">Listening...</string>
+    <string name="press_microphone_to_speak">Press the microphone to speak</string>
+
+    <!-- Screens / Sections -->
+    <string name="transcription">Transcription</string>
+    <string name="choose_language">Choose Language</string>
+    <string name="language_select">Language Select</string>
+
+    <!-- Languages -->
+    <string name="german">German</string>
+    <string name="english">English</string>
+    <string name="russian">Russian</string>
+    <string name="polish">Polish</string>
+    <string name="french">French</string>
+    <string name="stop_recording">Stop Recording</string>
+    <string name="search_language">Search language</string>
+    <string name="delete">Delete</string>
+    <string name="source_language">Source language</string>
+    <string name="target_language">Target language</string>
+    <string name="all_languages">All languages</string>
+
+    <string name="permission_dialog_title">Permission required</string>
+    <string name="permission_dialog_description">Microphone permission is required for live translations. Please enable it in the app settings.</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="cancel">Cancel</string>
+</resources>
