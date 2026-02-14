@@ -1,88 +1,107 @@
 package com.talkbridge.livetranslator.data
 
-//import com.google.firebase.database.tubesock.WebSocket
+import android.util.Log
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import okio.ByteString
+import okio.ByteString.Companion.toByteString
+import org.json.JSONObject
 
 class TalkBridgeClient(
-    private val serverUrl: String = "ws://192.168.1.100:8000/ws/translate"
+    private val serverUrl: String = "ws://192.168.178.74:8000/ws/translate" //für emulator 10.0.2.2 , für physisch: 192.168.178.74
 ) {
-//    private var webSocket: WebSocket? = null
-//    private val client = OkHttpClient()
-//
-//
-//    fun connect(sourceLang: String, targetLang: String) {
-//        val request = Request.Builder()
-//            .url(serverUrl)
-//            .build()
-//
-//        webSocket = client.newWebSocket(request, object : WebSocketListener() {
-//            override fun onOpen(webSocket: WebSocket, response: Response) {
-//                println("WebSocket connected")
-//
-//                // Initialisierung senden
-//                val initData = JSONObject().apply {
-//                    put("source_lang", sourceLang)
-//                    put("target_lang", targetLang)
-//                }
-//                webSocket.send(initData.toString())
-//            }
-//
-//            override fun onMessage(webSocket: WebSocket, text: String) {
-//                handleJsonMessage(text)
-//            }
-//
-//            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-//                // Audio-Daten empfangen (übersetzte Sprache)
+    private var webSocket: WebSocket? = null
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(7, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
+
+    var onReady: (() -> Unit)? = null
+    var onError: ((String) -> Unit)? = null
+    var onStop: (() -> Unit)? = null
+    var ontranslationResponse: ((String) -> Unit)? = null
+
+
+    fun connect(sourceLang: String, targetLang: String) {
+        val request = Request.Builder()
+            .url(serverUrl)
+            .build()
+
+        Log.d("TalkBridgeClient","trying to connect")
+
+        webSocket = client.newWebSocket(request, object : WebSocketListener() {
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                Log.d("TalkBridgeClient","WebSocket connected")
+
+                val initData = JSONObject().apply {
+                    put("source_lang", sourceLang)
+                    put("target_lang", targetLang)
+                }
+                webSocket.send(initData.toString())
+            }
+
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                handleJsonMessage(text)
+                Log.d("TalkBridgeClient", "Message: $text")
+            }
+
+            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+                // Audio-Daten empfangen (übersetzte Sprache)
+                Log.d("TalkBridgeClient", "bytes: $bytes")
 //                playAudio(bytes.toByteArray())
-//            }
-//
-//            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-//                println("WebSocket closing: $reason")
-//                stopRecording()
-//            }
-//
-//            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-//                println("WebSocket error: ${t.message}")
-//                onError?.invoke(t.message ?: "Unknown error")
-//            }
-//        })
-//    }
-//
-//
-//    private fun handleJsonMessage(message: String) {
-//        try {
-//            val json = JSONObject(message)
-//            val type = json.getString("type")
-//
-//            when (type) {
-//                "ready" -> {
-//                    println("Server ready, starting audio recording")
-//                    startRecording()
-//                }
-//                "partial" -> {
-//                    val text = json.getString("text")
-//                    onPartialResult?.invoke(text)
-//                }
-//                "final" -> {
-//                    val text = json.getString("text")
+            }
+
+            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                Log.d("TalkBridgeClient", "WebSocket closing: $reason")
+                onStop?.invoke()
+            }
+
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                Log.d("TalkBridgeClient", "WebSocket error: ${t.message}")
+                onError?.invoke(t.message ?: "Unknown error")
+            }
+        })
+    }
+
+    fun sendAudio(audioData: ByteArray){
+        webSocket?.send(audioData.toByteString())
+    }
+
+    private fun handleJsonMessage(message: String) {
+        try {
+            val json = JSONObject(message)
+            val type = json.getString("type")
+
+            when (type) {
+                "ready" -> {
+                    onReady?.invoke()
+                }
+                "partial" -> {
+                    val text = json.getString("text")
+                    ontranslationResponse?.invoke(text)
+                }
+                "final" -> {
+                    val text = json.getString("text")
+                    ontranslationResponse?.invoke(text)
 //                    onFinalResult?.invoke(text)
-//                }
+                }
 //                "translation" -> {
 //                    val text = json.getString("text")
-//                    onTranslation?.invoke(text)
+////                    onTranslation?.invoke(text)
 //                }
 //                "state_change" -> {
 //                    val state = json.getString("state")
-//                    onStateChanged?.invoke(state)
+////                    onStateChanged?.invoke(state)
 //                }
-//            }
-//        } catch (e: Exception) {
-//            println("Error parsing message: ${e.message}")
-//        }
-//    }
-//
-//
-//
-//    fun disconnect() {
-//        webSocket?.close(1000, "Client disconnecting")
-//    }
+            }
+        } catch (e: Exception) {
+            Log.d("TalkBridgeClient", "Error parsing message: ${e.message}")
+        }
+    }
+
+    fun disconnect() {
+        webSocket?.close(1000, "Client disconnecting")
+    }
 }

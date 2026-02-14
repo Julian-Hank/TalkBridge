@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
@@ -27,11 +26,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +39,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,18 +57,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talkbridge.livetranslator.R
 import com.talkbridge.livetranslator.TalkBridgeBottomNavBar
 import com.talkbridge.livetranslator.TalkBridgeTopAppBar
 import com.talkbridge.livetranslator.data.Language
 import com.talkbridge.livetranslator.data.LanguageData
 import com.talkbridge.livetranslator.data.LanguageDataSource
-import com.talkbridge.livetranslator.ui.AppViewModelProvider
 import com.talkbridge.livetranslator.ui.navigation.NavigationDestinationWithIcon
 import com.talkbridge.livetranslator.ui.theme.TalkBridgeLiveTheme
 import com.talkbridge.livetranslator.ui.theme.error
-import com.talkbridge.livetranslator.ui.theme.errorContainer
 import com.talkbridge.livetranslator.ui.theme.onTertiary
 import com.talkbridge.livetranslator.ui.theme.primary
 import com.talkbridge.livetranslator.ui.theme.stopColor
@@ -139,24 +134,86 @@ fun HomeBody(
     onStopButtonClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (uiState.active) {
-        ActiveHomeBody(
-            uiState = uiState,
-            onStopButtonClick = onStopButtonClick,
-            modifier = modifier
+    when (uiState.connectionState){
+        ConnectionState.CONNECTED -> {
+            ActiveHomeBody(
+                uiState = uiState,
+                onStopButtonClick = onStopButtonClick,
+                modifier = modifier
+            )
+        }
+        ConnectionState.CONNECTING -> {
+            LoadingBody(modifier = modifier)
+        }
+        ConnectionState.NOT_CONNECTED -> {
+            InactiveHomeBody(
+                uiState = uiState,
+                onSwapClick = onLanguageSwapClick,
+                onSourceLanguageClick = onSourceLanguageClick,
+                onTargetLanguageClick = onTargetLanguageClick,
+                onStartButtonClick = onStartButtonClick,
+                modifier = modifier
+            )
+        }
+        ConnectionState.FAILED -> {
+            ConnectionFailureBody(onRetryButtonClick = onStartButtonClick, modifier = modifier)
+        }
+    }
+}
+
+@Composable
+fun LoadingBody(modifier: Modifier = Modifier) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+    ) {
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = "Warte auf Verbindung",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier
+                .weight(2f)
         )
-    } else {
-        InactiveHomeBody(
-            uiState = uiState,
-            onSwapClick = onLanguageSwapClick,
-            onSourceLanguageClick = onSourceLanguageClick,
-            onTargetLanguageClick = onTargetLanguageClick,
-            onStartButtonClick = onStartButtonClick,
-            modifier = modifier
+        CircularProgressIndicator(
+            modifier = Modifier
+                .weight(6f)
+                .size(128.dp),
+            strokeWidth = 8.dp
         )
     }
 }
 
+@Composable
+fun ConnectionFailureBody(
+    onRetryButtonClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+    ) {
+        Text(
+            text = "Verbindung fehlgeschlagen",
+            style = MaterialTheme.typography.bodyMedium,
+            color = error,
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = { onRetryButtonClick() },
+        ) {
+            Text("Erneut versuchen")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Zurück",
+            modifier = Modifier.clickable(
+                onClick = {  }
+            )
+        )
+    }
+}
 
 @Composable
 fun ActiveHomeBody(
@@ -166,7 +223,10 @@ fun ActiveHomeBody(
 ) {
     Column(modifier = modifier) {
         Spacer(modifier = Modifier.weight(.5f))
-        TextResultContainer(modifier =  Modifier.weight(5f))
+        TextResultContainer(
+            text = uiState.currentText,
+            modifier =  Modifier.weight(5f)
+        )
         Spacer(modifier = Modifier.weight(.5f))
         StopButton(
             onClick = onStopButtonClick,
@@ -217,6 +277,7 @@ fun InactiveHomeBody(
         Spacer(modifier = Modifier.weight(.375f))
     }
 }
+
 
 
 @Composable
@@ -433,8 +494,8 @@ fun StartButton(
                         .clickable {
                             if (ContextCompat.checkSelfPermission(
                                     context, Manifest.permission.RECORD_AUDIO
-                                ) == PackageManager.PERMISSION_GRANTED)
-                            {
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
                                 onClick()
                             } else {
                                 permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
@@ -514,6 +575,17 @@ fun StopButton(
     }
 }
 
+
+@Composable
+fun LoadingTest(modifier: Modifier = Modifier) {
+    CircularProgressIndicator(
+        modifier = Modifier
+            .size(24.dp)
+            .padding(8.dp),
+        strokeWidth = 2.dp
+    )
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun ScreenInactivePreview() {
@@ -529,7 +601,7 @@ private fun ScreenInactivePreview() {
 private fun ScreenActivePreview() {
     TalkBridgeLiveTheme {
         HomeScreen(
-            uiState = HomeUiState(active = true)
+            uiState = HomeUiState(connectionState = ConnectionState.CONNECTED)
         )
     }
 }

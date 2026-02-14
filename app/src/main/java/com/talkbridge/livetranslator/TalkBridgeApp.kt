@@ -1,15 +1,10 @@
 package com.talkbridge.livetranslator
 
-import android.util.Log
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.padding
+
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.Icons.Filled
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -22,18 +17,14 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.talkbridge.livetranslator.ui.facetoface.FaceToFaceDestination
 import com.talkbridge.livetranslator.ui.home.HomeDestination
-import com.talkbridge.livetranslator.ui.navigation.NavigationDestination
 import com.talkbridge.livetranslator.ui.navigation.NavigationDestinationWithIcon
 import com.talkbridge.livetranslator.ui.navigation.TalkBridgeNavHost
 import com.talkbridge.livetranslator.ui.theme.TalkBridgeLiveTheme

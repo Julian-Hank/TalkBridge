@@ -1,11 +1,10 @@
 package com.talkbridge.livetranslator.ui.home
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
 import com.talkbridge.livetranslator.data.LanguageData
-import com.talkbridge.livetranslator.data.audio.AudioOutputManager
+import com.talkbridge.livetranslator.data.TalkBridgeClient
 import com.talkbridge.livetranslator.data.audio.AudioRecorder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,68 +13,83 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel: ViewModel() {
-//    private lateinit var audioOutputManager: AudioOutputManager
-//    private lateinit var audioRecorder: AudioRecorder
+    private val talkBridgeClient = TalkBridgeClient()
+    private val audioRecorder = AudioRecorder()
 
     private val _homeUiState = MutableStateFlow(HomeUiState())
     val homeUiState: StateFlow<HomeUiState> = _homeUiState.asStateFlow()
 
-    private val audioRecorder = AudioRecorder()
+    init {
+        setupClientCallbacks()
+    }
+
+    private fun setupClientCallbacks() {
+        talkBridgeClient.onReady = { handleServerReady() }
+        talkBridgeClient.onError = { error -> handleError(error) }
+        talkBridgeClient.onStop = {  }
+        talkBridgeClient.ontranslationResponse = { text -> setCurrentText(text) }
+    }
+
+    private fun handleServerReady() {
+        _homeUiState.update { currentState ->
+            currentState.copy(
+                connectionState = ConnectionState.CONNECTED
+            )
+        }
+        startRecording()
+    }
+
+    private fun handleError(error: String){
+        talkBridgeClient.disconnect()
+        _homeUiState.update { currentState ->
+            currentState.copy(
+                connectionState = ConnectionState.FAILED
+            )
+        }
+        stopRecording()
+    }
+
+    fun connectWithServer(){
+        _homeUiState.update { currentState ->
+            currentState.copy(
+                connectionState = ConnectionState.CONNECTING
+            )
+        }
+        talkBridgeClient.connect(
+            sourceLang = "english", //zum testen
+            targetLang = "german",
+        )
+    }
 
     fun startRecording() {
-        if (!homeUiState.value.active){
-            _homeUiState.update { currentState ->
-                currentState.copy(
-                    active = true
-                )
-            }
-        }
         viewModelScope.launch {
             audioRecorder.startRecording { audioData ->
                 try {
-                    // TODO audioData an Backend senden
-                    val max = audioData.maxOrNull() ?: 0
-                    val min = audioData.minOrNull() ?: 0
-    //                Log.i("HomeViewModel", audioData.toString())
-                    Log.i("HomeViewModel", "Audio Data - Size: ${audioData.size}, Max: $max, Min: $min")
+                    talkBridgeClient.sendAudio(audioData)
                 } catch (e: Exception) {
-                    TODO("Not yet implemented")
+                    handleError(e.toString())
                 }
             }
         }
     }
 
     fun stopRecording() {
-        if (homeUiState.value.active){
+        talkBridgeClient.disconnect()
+        if (homeUiState.value.connectionState == ConnectionState.CONNECTED){
             _homeUiState.update { currentState ->
                 currentState.copy(
-                    active = false
+                    connectionState = ConnectionState.NOT_CONNECTED
                 )
             }
         }
         audioRecorder.stopRecording()
+        resetCurrentText()
     }
 
-    companion object {
-        private const val TIMEOUT_MILLIS = 5_000L
-    }
-
-    fun setOriginLanguage(
-        language: LanguageData
-    ){
+    fun resetConnectionState(){
         _homeUiState.update { currentState ->
             currentState.copy(
-                sourceLanguage = language
-            )
-        }
-    }
-
-    fun setTargetLanguage(
-        language: LanguageData
-    ){
-        _homeUiState.update { currentState ->
-            currentState.copy(
-                targetLanguage = language
+                connectionState = ConnectionState.CONNECTED
             )
         }
     }
@@ -84,6 +98,14 @@ class HomeViewModel: ViewModel() {
         _homeUiState.update { currentState ->
             currentState.copy(
                 currentText = text
+            )
+        }
+    }
+
+    fun resetCurrentText(){
+        _homeUiState.update { currentState ->
+            currentState.copy(
+                currentText = null
             )
         }
     }
@@ -100,7 +122,6 @@ class HomeViewModel: ViewModel() {
                 )
             }
         }
-
     }
 
     fun updateTargetLanguage(language: LanguageData){
@@ -131,8 +152,15 @@ class HomeViewModel: ViewModel() {
 }
 
 data class HomeUiState(
-    val active: Boolean = false,
+    val connectionState: ConnectionState = ConnectionState.NOT_CONNECTED,
     val sourceLanguage: LanguageData = LanguageData(R.string.english, R.drawable.uk_flag_circular),
     val targetLanguage: LanguageData = LanguageData(R.string.german, R.drawable.germany_flag_circular),
-    val currentText: String? = null
+    val currentText: String? = null,
 )
+
+enum class ConnectionState {
+    NOT_CONNECTED,
+    CONNECTED,
+    CONNECTING,
+    FAILED
+}

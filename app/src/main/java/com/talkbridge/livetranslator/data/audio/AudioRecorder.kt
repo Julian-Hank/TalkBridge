@@ -3,6 +3,7 @@ package com.talkbridge.livetranslator.data.audio
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -54,11 +55,15 @@ class AudioRecorder(
     }
 
     fun stopRecording() {
-        isRecording = false
-        audioRecord?.apply {
-            stop()
-            release()
+        if (isRecording){
+            isRecording = false
+            audioRecord?.apply {
+                stop()
+                release()
+            }
+            audioRecord = null
+        } else {
+            Log.w("AudioRecorder", "nothing to stop")
         }
-        audioRecord = null
     }
 }

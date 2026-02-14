@@ -1,17 +1,14 @@
 package com.talkbridge.livetranslator.ui.navigation
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.talkbridge.livetranslator.ui.AppViewModelProvider
 import com.talkbridge.livetranslator.ui.common.LanguageSelectDestination
@@ -69,7 +66,7 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                     navController.navigate("${LanguageSelectDestination.route}/target")
                 },
                 onLanguageSwapClick = { viewModel.swapLanguages() },
-                onStartButtonClick = { viewModel.startRecording() },
+                onStartButtonClick = { viewModel.connectWithServer() },
                 onStopButtonClick = { viewModel.stopRecording() }
             )
         }

@@ -52,6 +52,10 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 //    implementation(libs.androidx.datastore.core)
 
+    implementation(libs.okhttp)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.kotlinx.coroutines.android)
+
     //Datastore
     implementation(libs.androidx.datastore.preferences)
 
