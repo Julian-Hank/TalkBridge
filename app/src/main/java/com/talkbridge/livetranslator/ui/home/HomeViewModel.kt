@@ -1,5 +1,6 @@
 package com.talkbridge.livetranslator.ui.home
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
@@ -12,7 +13,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class HomeViewModel: ViewModel() {
+private const val TAG: String = "HomeViewModel"
+
+class HomeViewModel(): ViewModel() {
     private val talkBridgeClient = TalkBridgeClient()
     private val audioRecorder = AudioRecorder()
 
@@ -25,28 +28,35 @@ class HomeViewModel: ViewModel() {
 
     private fun setupClientCallbacks() {
         talkBridgeClient.onReady = { handleServerReady() }
+        talkBridgeClient.onConnected = { handleServerConnected() }
         talkBridgeClient.onError = { error -> handleError(error) }
-        talkBridgeClient.onStop = {  }
         talkBridgeClient.ontranslationResponse = { text -> setCurrentText(text) }
+    }
+
+    private fun handleServerConnected() {
+        _homeUiState.update { currentState ->
+            currentState.copy(
+                connectionState = ConnectionState.CONNECTED
+            )
+        }
     }
 
     private fun handleServerReady() {
         _homeUiState.update { currentState ->
             currentState.copy(
-                connectionState = ConnectionState.CONNECTED
+                connectionState = ConnectionState.READY
             )
         }
         startRecording()
     }
 
     private fun handleError(error: String){
-        talkBridgeClient.disconnect()
+        stopRecording()
         _homeUiState.update { currentState ->
             currentState.copy(
                 connectionState = ConnectionState.FAILED
             )
         }
-        stopRecording()
     }
 
     fun connectWithServer(){
@@ -56,8 +66,8 @@ class HomeViewModel: ViewModel() {
             )
         }
         talkBridgeClient.connect(
-            sourceLang = "english", //zum testen
-            targetLang = "german",
+            sourceLang = stringResToLanguagecode(homeUiState.value.sourceLanguage.languageName),
+            targetLang = stringResToLanguagecode(homeUiState.value.targetLanguage.languageName),
         )
     }
 
@@ -75,12 +85,10 @@ class HomeViewModel: ViewModel() {
 
     fun stopRecording() {
         talkBridgeClient.disconnect()
-        if (homeUiState.value.connectionState == ConnectionState.CONNECTED){
-            _homeUiState.update { currentState ->
-                currentState.copy(
-                    connectionState = ConnectionState.NOT_CONNECTED
-                )
-            }
+        _homeUiState.update { currentState ->
+            currentState.copy(
+                connectionState = ConnectionState.NOT_CONNECTED
+            )
         }
         audioRecorder.stopRecording()
         resetCurrentText()
@@ -89,7 +97,7 @@ class HomeViewModel: ViewModel() {
     fun resetConnectionState(){
         _homeUiState.update { currentState ->
             currentState.copy(
-                connectionState = ConnectionState.CONNECTED
+                connectionState = ConnectionState.NOT_CONNECTED
             )
         }
     }
@@ -149,6 +157,29 @@ class HomeViewModel: ViewModel() {
             )
         }
     }
+
+    private val stringResToLang = mapOf(
+        R.string.chinese to "cn",
+        R.string.dutch to "nl",
+        R.string.english to "en",
+        R.string.french to "fr",
+        R.string.german to "de",
+        R.string.italian to "it",
+        R.string.japanese to "ja",
+        R.string.korean to "ko",
+        R.string.polish to "pl",
+        R.string.portuguese to "pt",
+        R.string.russian to "ru",
+        R.string.spanish to "es",
+        R.string.swedish to "sv",
+        R.string.turkish to "tr",
+        R.string.ukrainian to "uk",
+        R.string.vietnamese to "vi"
+    )
+
+
+    private fun stringResToLanguagecode(@StringRes stringRes: Int): String =
+        stringResToLang[stringRes] ?: "en"
 }
 
 data class HomeUiState(
@@ -160,7 +191,8 @@ data class HomeUiState(
 
 enum class ConnectionState {
     NOT_CONNECTED,
-    CONNECTED,
     CONNECTING,
+    CONNECTED,
+    READY,
     FAILED
 }

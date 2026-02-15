@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
@@ -39,6 +40,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +54,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -77,6 +81,8 @@ object HomeDestination : NavigationDestinationWithIcon {
     override val icon = R.drawable.talkbridge_logo_navbar
 }
 
+private const val TAG: String = "HomeScreen"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -88,17 +94,21 @@ fun HomeScreen(
     onStartButtonClick: () -> Unit = {},
     onStopButtonClick: () -> Unit = {},
     onLanguageSwapClick: () -> Unit = {},
+    onBackButtonClick: () -> Unit = {},
     uiState: HomeUiState,
 ) {
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+    val canNavigateBack = remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TalkBridgeTopAppBar(
                 title = null,
-                canNavigateBack = false,
+                canNavigateBack = canNavigateBack.value,
+                navigateUp = onBackButtonClick,
                 openSettings = openSettings
             )
         },
@@ -116,6 +126,7 @@ fun HomeScreen(
             onTargetLanguageClick = onTargetLanguageClick,
             onStartButtonClick = onStartButtonClick,
             onStopButtonClick = onStopButtonClick,
+            canNavigateBackState = canNavigateBack,
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -132,20 +143,12 @@ fun HomeBody(
     onSourceLanguageClick: () -> Unit,
     onStartButtonClick: () -> Unit,
     onStopButtonClick: () -> Unit,
-    modifier: Modifier = Modifier
+    canNavigateBackState: MutableState<Boolean>,
+    modifier: Modifier = Modifier,
 ) {
     when (uiState.connectionState){
-        ConnectionState.CONNECTED -> {
-            ActiveHomeBody(
-                uiState = uiState,
-                onStopButtonClick = onStopButtonClick,
-                modifier = modifier
-            )
-        }
-        ConnectionState.CONNECTING -> {
-            LoadingBody(modifier = modifier)
-        }
         ConnectionState.NOT_CONNECTED -> {
+            canNavigateBackState.value = false
             InactiveHomeBody(
                 uiState = uiState,
                 onSwapClick = onLanguageSwapClick,
@@ -155,14 +158,43 @@ fun HomeBody(
                 modifier = modifier
             )
         }
+        ConnectionState.CONNECTING -> {
+            canNavigateBackState.value = false
+            LoadingBody(
+                connected = false,
+                modifier = modifier
+            )
+        }
+        ConnectionState.CONNECTED -> {
+            canNavigateBackState.value = false
+            LoadingBody(
+                connected = true,
+                modifier = modifier
+            )
+        }
+        ConnectionState.READY -> {
+            canNavigateBackState.value = false
+            ActiveHomeBody(
+                uiState = uiState,
+                onStopButtonClick = onStopButtonClick,
+                modifier = modifier
+            )
+        }
         ConnectionState.FAILED -> {
-            ConnectionFailureBody(onRetryButtonClick = onStartButtonClick, modifier = modifier)
+            canNavigateBackState.value = true
+            ConnectionFailureBody(
+                onRetryButtonClick = onStartButtonClick,
+                modifier = modifier
+            )
         }
     }
 }
 
 @Composable
-fun LoadingBody(modifier: Modifier = Modifier) {
+fun LoadingBody(
+    connected: Boolean,
+    modifier: Modifier = Modifier
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -170,7 +202,7 @@ fun LoadingBody(modifier: Modifier = Modifier) {
     ) {
         Spacer(modifier = Modifier.weight(1f))
         Text(
-            text = "Warte auf Verbindung",
+            text = if (!connected) "Warte auf Verbindung..." else "Verbindung hergestellt\nStarte Modell...",
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier
                 .weight(2f)
@@ -205,13 +237,6 @@ fun ConnectionFailureBody(
         ) {
             Text("Erneut versuchen")
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Zurück",
-            modifier = Modifier.clickable(
-                onClick = {  }
-            )
-        )
     }
 }
 
@@ -221,6 +246,16 @@ fun ActiveHomeBody(
     onStopButtonClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val view = LocalView.current
+
+    DisposableEffect(true) {
+        view.keepScreenOn = true
+
+        onDispose {
+            view.keepScreenOn = false
+        }
+    }
+
     Column(modifier = modifier) {
         Spacer(modifier = Modifier.weight(.5f))
         TextResultContainer(

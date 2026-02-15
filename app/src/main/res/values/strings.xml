@@ -34,6 +34,18 @@
     <string name="russian">Russian</string>
     <string name="polish">Polish</string>
     <string name="french">French</string>
+    <string name="chinese">Chinese</string>
+    <string name="ukrainian">Ukrainian</string>
+    <string name="spanish">Spanish</string>
+    <string name="portuguese">Portuguese</string>
+    <string name="turkish">Turkish</string>
+    <string name="italian">Italian</string>
+    <string name="japanese">Japanese</string>
+    <string name="swedish">Swedish</string>
+    <string name="korean">Korean</string>
+    <string name="dutch">Dutch</string>
+    <string name="vietnamese">Vietnamese</string>
+
     <string name="stop_recording">Stop Recording</string>
     <string name="search_language">Search language</string>
     <string name="delete">Delete</string>

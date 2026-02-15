@@ -33,6 +33,17 @@
     <string name="russian">Russisch</string>
     <string name="polish">Polnisch</string>
     <string name="french">Französisch</string>
+    <string name="chinese">Chinesisch</string>
+    <string name="ukrainian">Ukrainisch</string>
+    <string name="portuguese">Portugiesisch</string>
+    <string name="turkish">Türkisch</string>
+    <string name="italian">Italienisch</string>
+    <string name="japanese">Japanisch</string>
+    <string name="swedish">Schwedisch</string>
+    <string name="korean">Koreanisch</string>
+    <string name="dutch">Niederländisch</string>
+    <string name="vietnamese">Vietnamesisch</string>
+
     <string name="stop_recording">Aufnahme Stoppen</string>
     <string name="app_name_on_homescreen">Live Übersetzer</string>
     <string name="search_language">Sprache suchen</string>

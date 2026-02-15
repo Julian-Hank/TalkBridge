@@ -67,7 +67,8 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                 },
                 onLanguageSwapClick = { viewModel.swapLanguages() },
                 onStartButtonClick = { viewModel.connectWithServer() },
-                onStopButtonClick = { viewModel.stopRecording() }
+                onStopButtonClick = { viewModel.stopRecording() },
+                onBackButtonClick = { viewModel.resetConnectionState() }
             )
         }
         composable(

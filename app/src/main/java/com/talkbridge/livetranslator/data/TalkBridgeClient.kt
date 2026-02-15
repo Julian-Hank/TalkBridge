@@ -11,16 +11,18 @@ import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
 
 class TalkBridgeClient(
-    private val serverUrl: String = "ws://192.168.178.74:8000/ws/translate" //für emulator 10.0.2.2 , für physisch: 192.168.178.74
+    private val serverUrl: String = "ws://192.168.178.74:8000/ws/translate" //zusätzlich für emulator 10.0.2.2 , für physisch: 192.168.178.74
 ) {
     private var webSocket: WebSocket? = null
     private val client = OkHttpClient.Builder()
-        .connectTimeout(7, java.util.concurrent.TimeUnit.SECONDS)
+        .connectTimeout(6, java.util.concurrent.TimeUnit.SECONDS)
         .build()
 
     var onReady: (() -> Unit)? = null
     var onError: ((String) -> Unit)? = null
-    var onStop: (() -> Unit)? = null
+    var onConnected :(() -> Unit)? = null
+    var onPartial: ((String) -> Unit)? = null
+    var onFinal: ((String) -> Unit)? = null
     var ontranslationResponse: ((String) -> Unit)? = null
 
 
@@ -55,7 +57,6 @@ class TalkBridgeClient(
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
                 Log.d("TalkBridgeClient", "WebSocket closing: $reason")
-                onStop?.invoke()
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
@@ -75,6 +76,9 @@ class TalkBridgeClient(
             val type = json.getString("type")
 
             when (type) {
+                "connected" -> {
+                    onConnected?.invoke()
+                }
                 "ready" -> {
                     onReady?.invoke()
                 }
