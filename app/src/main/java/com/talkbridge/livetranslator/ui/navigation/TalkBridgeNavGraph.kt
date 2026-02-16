@@ -101,7 +101,8 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                                 homeViewModel.updateTargetLanguage(language)
                             }
                             navController.navigateUp()
-                        }
+                        },
+                        recentLanguages = homeViewModel.homeUiState.collectAsState().value.recentLanguages
                     )
                 }
 

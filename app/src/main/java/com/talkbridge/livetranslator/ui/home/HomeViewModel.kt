@@ -1,21 +1,28 @@
 package com.talkbridge.livetranslator.ui.home
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
+import com.talkbridge.livetranslator.data.Language
 import com.talkbridge.livetranslator.data.LanguageData
+import com.talkbridge.livetranslator.data.LanguageDataSource.languagesMap
 import com.talkbridge.livetranslator.data.TalkBridgeClient
 import com.talkbridge.livetranslator.data.audio.AudioRecorder
+import com.talkbridge.livetranslator.data.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 private const val TAG: String = "HomeViewModel"
 
-class HomeViewModel(): ViewModel() {
+class HomeViewModel(
+    private val userPreferencesRepository: UserPreferencesRepository
+): ViewModel() {
     private val talkBridgeClient = TalkBridgeClient()
     private val audioRecorder = AudioRecorder()
 
@@ -24,6 +31,33 @@ class HomeViewModel(): ViewModel() {
 
     init {
         setupClientCallbacks()
+        observePreferences()
+    }
+
+    private fun observePreferences() {
+        viewModelScope.launch {
+            userPreferencesRepository.currentSourceLanguage
+                .combine(userPreferencesRepository.currentTargetLanguage) { source, target ->
+                    source to target
+                }
+                .combine(userPreferencesRepository.recentLanguages) { pair, recent ->
+                    Triple(pair.first, pair.second, recent)
+                }
+                .collect { (source, target, recent) ->
+
+                    val recentLanguages = recent.map { languagecode ->
+                        languagesMap.getValue(languagecodeToLanguageObject(languagecode))
+                    }
+
+                    _homeUiState.update { currentState ->
+                        currentState.copy(
+                            sourceLanguage = languagesMap.getValue(languagecodeToLanguageObject(source)),
+                            targetLanguage = languagesMap.getValue(languagecodeToLanguageObject(target)),
+                            recentLanguages = recentLanguages
+                        )
+                    }
+                }
+        }
     }
 
     private fun setupClientCallbacks() {
@@ -124,6 +158,15 @@ class HomeViewModel(): ViewModel() {
         if (language == targetLanguage){
             swapLanguages()
         } else{
+            viewModelScope.launch {
+                userPreferencesRepository.saveCurrentLanguages(
+                    sourceLanguageCode = stringResToLanguagecode(language.languageName),
+                    targetLanguageCode = stringResToLanguagecode(targetLanguage.languageName)
+                )
+                userPreferencesRepository.addRecentLanguage(
+                    newLanguageCode = stringResToLanguagecode(language.languageName)
+                )
+            }
             _homeUiState.update { currentState ->
                 currentState.copy(
                     sourceLanguage = language
@@ -138,6 +181,15 @@ class HomeViewModel(): ViewModel() {
         if (language == sourceLanguage){
             swapLanguages()
         } else {
+            viewModelScope.launch {
+                userPreferencesRepository.saveCurrentLanguages(
+                    sourceLanguageCode = stringResToLanguagecode(sourceLanguage.languageName),
+                    targetLanguageCode = stringResToLanguagecode(language.languageName)
+                )
+                userPreferencesRepository.addRecentLanguage(
+                    newLanguageCode = stringResToLanguagecode(language.languageName)
+                )
+            }
             _homeUiState.update { currentState ->
                 currentState.copy(
                     targetLanguage = language
@@ -177,9 +229,30 @@ class HomeViewModel(): ViewModel() {
         R.string.vietnamese to "vi"
     )
 
+    private val langToLanguageObject = mapOf(
+        "cn" to Language.CHINESE,
+        "nl" to Language.DUTCH,
+        "en" to Language.ENGLISH,
+        "fr" to Language.FRENCH,
+        "de" to Language.GERMAN,
+        "it" to Language.ITALIAN,
+        "ja" to Language.JAPANESE,
+        "ko" to Language.KOREAN,
+        "pl" to Language.POLISH,
+        "pt" to Language.PORTUGUESE,
+        "ru" to Language.RUSSIAN,
+        "es" to Language.SPANISH,
+        "sv" to Language.SWEDISH,
+        "tr" to Language.TURKISH,
+        "uk" to Language.UKRAINIAN,
+        "vi" to Language.VIETNAMESE,
+    )
 
     private fun stringResToLanguagecode(@StringRes stringRes: Int): String =
         stringResToLang[stringRes] ?: "en"
+
+    private fun languagecodeToLanguageObject(languagecode: String): Language =
+        langToLanguageObject[languagecode] ?: Language.ENGLISH
 }
 
 data class HomeUiState(
@@ -187,6 +260,7 @@ data class HomeUiState(
     val sourceLanguage: LanguageData = LanguageData(R.string.english, R.drawable.uk_flag_circular),
     val targetLanguage: LanguageData = LanguageData(R.string.german, R.drawable.germany_flag_circular),
     val currentText: String? = null,
+    val recentLanguages: List<LanguageData>? = null
 )
 
 enum class ConnectionState {

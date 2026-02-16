@@ -67,7 +67,8 @@ fun LanguageSelectScreen(
     modifier: Modifier = Modifier,
     languageType: String, // "source" oder "target"
     onBackButtonClick: () -> Unit,
-    onLanguageSelected: (LanguageData) -> Unit
+    onLanguageSelected: (LanguageData) -> Unit,
+    recentLanguages: List<LanguageData>? = null,
 ){
     Scaffold(
         topBar = {
@@ -83,7 +84,8 @@ fun LanguageSelectScreen(
                 .fillMaxWidth()
                 .padding(innerPadding)
                 .padding(horizontal = 24.dp),
-            onLanguageSelected = onLanguageSelected
+            onLanguageSelected = onLanguageSelected,
+            recentLanguages = recentLanguages
         )
     }
 }
@@ -91,6 +93,7 @@ fun LanguageSelectScreen(
 @Composable
 fun LanguageSelectBody(
     modifier: Modifier = Modifier,
+    recentLanguages: List<LanguageData>? = null,
     onLanguageSelected: (LanguageData) -> Unit
 ) {
     val context = LocalContext.current
@@ -98,10 +101,6 @@ fun LanguageSelectBody(
     var expanded by remember { mutableStateOf(false) }
 
     val allLanguages = LanguageDataSource.languagesList
-    val recentLanguages = listOf(
-        LanguageData(R.string.german, R.drawable.germany_flag_circular),
-        LanguageData(R.string.english, R.drawable.uk_flag_circular),
-    )
 
     val filteredLanguages = remember(query) {
         if (query.isEmpty()) {
@@ -139,25 +138,26 @@ fun LanguageSelectBody(
         if (query.isEmpty()) {
 
             // Zuletzt verwendet
-            item {
-                Text(
-                    text = "Zuletzt",//stringResource(R.string.recently_used),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = primary,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 4.dp)
-                )
-            }
-
-            items(recentLanguages) { language ->
-                LanguageCard(
-                    language = language,
-                    selected = false,
-                    modifier = Modifier.clickable {
-                        onLanguageSelected(language)
-                    }
-                )
+            if (recentLanguages != null){
+                item {
+                    Text(
+                        text = "Zuletzt",//stringResource(R.string.recently_used),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = primary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp)
+                    )
+                }
+                items(items = recentLanguages) { language ->
+                    LanguageCard(
+                        language = language,
+                        selected = false,
+                        modifier = Modifier.clickable {
+                            onLanguageSelected(language)
+                        }
+                    )
+                }
             }
 
             item {
