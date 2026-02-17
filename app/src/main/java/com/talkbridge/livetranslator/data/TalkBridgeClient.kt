@@ -1,6 +1,8 @@
 package com.talkbridge.livetranslator.data
 
+import android.content.Context
 import android.util.Log
+import com.talkbridge.livetranslator.data.audio.AudioOutputManager
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -11,12 +13,15 @@ import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
 
 class TalkBridgeClient(
+    private val context: Context,
     private val serverUrl: String = "ws://192.168.178.74:8000/ws/translate" //zusätzlich für emulator 10.0.2.2 , für physisch: 192.168.178.74
 ) {
     private var webSocket: WebSocket? = null
     private val client = OkHttpClient.Builder()
         .connectTimeout(6, java.util.concurrent.TimeUnit.SECONDS)
         .build()
+
+    private val audioOutputManager: AudioOutputManager = AudioOutputManager(context)
 
     var onReady: (() -> Unit)? = null
     var onError: ((String) -> Unit)? = null
@@ -52,7 +57,7 @@ class TalkBridgeClient(
             override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
                 // Audio-Daten empfangen (übersetzte Sprache)
                 Log.d("TalkBridgeClient", "bytes: $bytes")
-//                playAudio(bytes.toByteArray())
+                audioOutputManager.playAudioBytes(bytes.toByteArray())
             }
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {

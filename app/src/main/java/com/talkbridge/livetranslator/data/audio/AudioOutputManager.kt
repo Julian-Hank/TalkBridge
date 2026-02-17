@@ -6,6 +6,7 @@ import android.media.MediaPlayer
 import android.media.SoundPool
 import android.util.Log
 import com.talkbridge.livetranslator.R
+import java.io.File
 
 class AudioOutputManager(private val context: Context) {
 
@@ -40,10 +41,25 @@ class AudioOutputManager(private val context: Context) {
 
     }
 
+    fun playAudioBytes(audioBytes: ByteArray){
+        try {
+            val tempFile = File.createTempFile("tts_", ".mp3", context.cacheDir)
+            tempFile.writeBytes(audioBytes)
 
-    /**
-     * Spielt einen Sound beim Start der Aufnahme
-     */
+            MediaPlayer().apply {
+                setDataSource(tempFile.absolutePath)
+                prepare()
+                start()
+                setOnCompletionListener {
+                    it.release()
+                    tempFile.delete()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("AudioOutputManager", "Audio playback error: ${e.message}")
+        }
+    }
+
     fun playRecordingStartSound() {
         try {
             soundPool?.play(startSoundId, 1f, 1f, 1, 0, 1f)
@@ -52,9 +68,6 @@ class AudioOutputManager(private val context: Context) {
         }
     }
 
-    /**
-     * Spielt einen Sound beim Stoppen der Aufnahme
-     */
     fun playRecordingStopSound() {
         try {
             soundPool?.play(stopSoundId, 1f, 1f, 1, 0, 1f)
@@ -63,9 +76,6 @@ class AudioOutputManager(private val context: Context) {
         }
     }
 
-    /**
-     * Spielt einen Error-Sound
-     */
     fun playErrorSound() {
         try {
             soundPool?.play(errorSoundId, 1f, 1f, 1, 0, 1f)

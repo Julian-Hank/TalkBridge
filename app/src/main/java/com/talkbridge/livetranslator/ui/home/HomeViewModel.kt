@@ -1,10 +1,14 @@
 package com.talkbridge.livetranslator.ui.home
 
+import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.annotation.StringRes
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
+import com.talkbridge.livetranslator.TalkBridgeApplication
 import com.talkbridge.livetranslator.data.Language
 import com.talkbridge.livetranslator.data.LanguageData
 import com.talkbridge.livetranslator.data.LanguageDataSource.languagesMap
@@ -21,9 +25,12 @@ import kotlinx.coroutines.launch
 private const val TAG: String = "HomeViewModel"
 
 class HomeViewModel(
+    application: Application,
     private val userPreferencesRepository: UserPreferencesRepository
-): ViewModel() {
-    private val talkBridgeClient = TalkBridgeClient()
+): AndroidViewModel(application) {
+    private val context = getApplication<Application>()
+
+    private val talkBridgeClient = TalkBridgeClient(context)
     private val audioRecorder = AudioRecorder()
 
     private val _homeUiState = MutableStateFlow(HomeUiState())

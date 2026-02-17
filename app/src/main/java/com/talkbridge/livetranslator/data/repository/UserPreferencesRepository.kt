@@ -50,6 +50,13 @@ class UserPreferencesRepository(
 
     val recentLanguages: Flow<List<String>> =
         dataStore.data
+            .catch {
+                if (it is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw it
+                }
+            }
             .map { preferences ->
                 preferences[RECENT_LANGUAGES]
                     ?.split(",")

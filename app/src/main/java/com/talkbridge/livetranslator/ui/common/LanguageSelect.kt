@@ -138,7 +138,8 @@ fun LanguageSelectBody(
         if (query.isEmpty()) {
 
             // Zuletzt verwendet
-            if (recentLanguages != null){
+            if (recentLanguages != null && !recentLanguages.isEmpty()){
+//                Log.d("langSelect", recentLanguages.toString())
                 item {
                     Text(
                         text = "Zuletzt",//stringResource(R.string.recently_used),

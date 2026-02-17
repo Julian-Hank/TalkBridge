@@ -12,7 +12,10 @@ import com.talkbridge.livetranslator.ui.home.HomeViewModel
 object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
-            HomeViewModel(userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository)
+            HomeViewModel(
+                application = talkBridgeApplication(),
+                userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository
+            )
         }
     }
 }
