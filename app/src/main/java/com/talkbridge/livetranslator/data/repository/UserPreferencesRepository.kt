@@ -1,5 +1,7 @@
 package com.talkbridge.livetranslator.data.repository
 
+import android.util.Log
+import androidx.compose.runtime.collectAsState
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -20,7 +22,23 @@ class UserPreferencesRepository(
         val CURRENT_SOURCE_LANGUAGE = stringPreferencesKey("current_source_language")
         val CURRENT_TARGET_LANGUAGE = stringPreferencesKey("current_target_language")
         val RECENT_LANGUAGES = stringPreferencesKey("recent_languages")
+
+        val COSTUM_IP_ADRESS = stringPreferencesKey("costum_ip_adress")
     }
+
+    val costumIPAdress: Flow<String> =
+        dataStore.data
+            .catch {
+                if (it is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw it
+                }
+            }
+            .map { preferences ->
+                preferences[COSTUM_IP_ADRESS] ?: ""
+            }
+
 
     val currentSourceLanguage: Flow<String> =
         dataStore.data
@@ -63,6 +81,14 @@ class UserPreferencesRepository(
                     ?.filter { it.isNotBlank() }
                     ?: emptyList()
             }
+
+    suspend fun saveCostumIP(
+        ip: String
+    ) {
+        dataStore.edit { preferences ->
+            preferences[COSTUM_IP_ADRESS] = ip
+        }
+    }
 
 
     suspend fun saveCurrentLanguages(

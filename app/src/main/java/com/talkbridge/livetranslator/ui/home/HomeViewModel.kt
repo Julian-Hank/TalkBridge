@@ -1,14 +1,10 @@
 package com.talkbridge.livetranslator.ui.home
 
 import android.app.Application
-import android.content.Context
-import android.util.Log
 import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
-import com.talkbridge.livetranslator.TalkBridgeApplication
 import com.talkbridge.livetranslator.data.Language
 import com.talkbridge.livetranslator.data.LanguageData
 import com.talkbridge.livetranslator.data.LanguageDataSource.languagesMap
@@ -36,9 +32,11 @@ class HomeViewModel(
     private val _homeUiState = MutableStateFlow(HomeUiState())
     val homeUiState: StateFlow<HomeUiState> = _homeUiState.asStateFlow()
 
+    private lateinit var customIPAddress: String
+
     init {
-        setupClientCallbacks()
         observePreferences()
+        setupClientCallbacks()
     }
 
     private fun observePreferences() {
@@ -65,13 +63,18 @@ class HomeViewModel(
                     }
                 }
         }
+        viewModelScope.launch {
+            userPreferencesRepository.costumIPAdress.collect {
+                customIPAddress = it
+            }
+        }
     }
 
     private fun setupClientCallbacks() {
         talkBridgeClient.onReady = { handleServerReady() }
         talkBridgeClient.onConnected = { handleServerConnected() }
         talkBridgeClient.onError = { error -> handleError(error) }
-        talkBridgeClient.ontranslationResponse = { text -> setCurrentText(text) }
+        talkBridgeClient.onTranslationResponse = { text -> setCurrentText(text) }
     }
 
     private fun handleServerConnected() {
@@ -106,10 +109,18 @@ class HomeViewModel(
                 connectionState = ConnectionState.CONNECTING
             )
         }
-        talkBridgeClient.connect(
-            sourceLang = stringResToLanguagecode(homeUiState.value.sourceLanguage.languageName),
-            targetLang = stringResToLanguagecode(homeUiState.value.targetLanguage.languageName),
-        )
+        if (customIPAddress == ""){
+            talkBridgeClient.connectWebsocket(
+                sourceLang = stringResToLanguagecode(homeUiState.value.sourceLanguage.languageName),
+                targetLang = stringResToLanguagecode(homeUiState.value.targetLanguage.languageName),
+            )
+        } else {
+            talkBridgeClient.connectWebsocket(
+                ipAddress = customIPAddress,
+                sourceLang = stringResToLanguagecode(homeUiState.value.sourceLanguage.languageName),
+                targetLang = stringResToLanguagecode(homeUiState.value.targetLanguage.languageName),
+            )
+        }
     }
 
     fun startRecording() {
@@ -218,7 +229,6 @@ class HomeViewModel(
     }
 
     private val stringResToLang = mapOf(
-        R.string.chinese to "cn",
         R.string.dutch to "nl",
         R.string.english to "en",
         R.string.french to "fr",
@@ -233,11 +243,11 @@ class HomeViewModel(
         R.string.swedish to "sv",
         R.string.turkish to "tr",
         R.string.ukrainian to "uk",
-        R.string.vietnamese to "vi"
+        R.string.vietnamese to "vi",
+        R.string.chinese to "zh"
     )
 
     private val langToLanguageObject = mapOf(
-        "cn" to Language.CHINESE,
         "nl" to Language.DUTCH,
         "en" to Language.ENGLISH,
         "fr" to Language.FRENCH,
@@ -253,6 +263,7 @@ class HomeViewModel(
         "tr" to Language.TURKISH,
         "uk" to Language.UKRAINIAN,
         "vi" to Language.VIETNAMESE,
+        "zh" to Language.CHINESE
     )
 
     private fun stringResToLanguagecode(@StringRes stringRes: Int): String =

@@ -1,5 +1,6 @@
 package com.talkbridge.livetranslator.ui.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,8 +21,10 @@ import com.talkbridge.livetranslator.ui.home.HomeScreen
 import com.talkbridge.livetranslator.ui.home.HomeViewModel
 import com.talkbridge.livetranslator.ui.settings.SettingsDestination
 import com.talkbridge.livetranslator.ui.settings.SettingsScreen
+import com.talkbridge.livetranslator.ui.settings.SettingsViewModel
 import com.talkbridge.livetranslator.ui.transcribe.TranscribeDestination
 import com.talkbridge.livetranslator.ui.transcribe.TranscribeScreen
+import com.talkbridge.livetranslator.ui.transcribe.TranscribeViewModel
 import com.talkbridge.livetranslator.ui.translate.TranslateDestination
 import com.talkbridge.livetranslator.ui.translate.TranslateScreen
 import com.talkbridge.livetranslator.ui.translate.TranslateViewModel
@@ -124,6 +127,21 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                         }
                     )
                 }
+
+                TranscribeDestination.route -> {
+                    val transcribeViewModel: TranscribeViewModel = viewModel(
+                        viewModelStoreOwner = navController.previousBackStackEntry!!,
+                        factory = AppViewModelProvider.Factory
+                    )
+                    LanguageSelectScreen(
+                        languageType = languageType,
+                        onBackButtonClick = { navController.navigateUp() },
+                        onLanguageSelected = { language ->
+                            transcribeViewModel.updateSourceLanguage(language)
+                            navController.navigateUp()
+                        }
+                    )
+                }
             }
         }
         composable(route = TranslateDestination.route) {
@@ -143,7 +161,14 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
             )
         }
         composable(route = TranscribeDestination.route) {
+            val viewModel = viewModel<TranscribeViewModel>(
+                factory = AppViewModelProvider.Factory
+            )
+            val uiState by viewModel.transcribeUiState.collectAsState()
+            val amplitudes by viewModel.waveAmplitudes.collectAsState()
+
             TranscribeScreen(
+                uiState = uiState,
                 onNavigationButtonClick = { item ->
                     navController.navigate(item.route) {
                         popUpTo(navController.graph.startDestinationId) {
@@ -155,7 +180,21 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                 },
                 openSettings = {
                     navController.navigate(SettingsDestination.route)
-                }
+                },
+                onAutoDetectSwitchClick = { autoDetect ->
+                    viewModel.setAutoDetectLanguage(autoDetect)
+                },
+                onLanguageItemClick = {
+                    navController.navigate("${LanguageSelectDestination.route}/source")
+                },
+                onStartClick = { viewModel.startRecording() },
+                onStopClick = { viewModel.stopRecording() },
+                onPauseClick = { viewModel.pauseRecording() },
+                onResumeClick = { viewModel.resumeRecording() },
+                onDeleteClick = { viewModel.deleteRecording() },
+                onFinishClick = { viewModel.sendRecording() },
+                waveAmplitudes = amplitudes
+
             )
         }
         composable(route = FaceToFaceDestination.route) {
@@ -172,8 +211,13 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
             )
         }
         composable(route = SettingsDestination.route) {
+            val viewModel = viewModel<SettingsViewModel>(
+                factory = AppViewModelProvider.Factory
+            )
+
             SettingsScreen(
-                { navController.navigateUp() }
+                viewModel = viewModel,
+                onBackButtonClick = { navController.navigateUp() }
             )
         }
     }

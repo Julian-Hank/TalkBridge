@@ -15,12 +15,12 @@
     <!-- Actions / Buttons -->
     <string name="start_live_translate">Start Live\nTranslate</string>
     <string name="stop_live_translate">Stop Live\nTranslate</string>
-    <string name="start_recording">Start Recording</string>
-    <string name="delete_recording">Delete Recording</string>
+    <string name="start_recording">Start\nRecording</string>
+    <string name="delete_recording">Delete\nRecording</string>
     <string name="switch_languages">Switch languages</string>
 
     <!-- Status / Hints -->
-    <string name="listening">Listening...</string>
+    <string name="listening">Listening…</string>
     <string name="press_microphone_to_speak">Press the microphone to speak</string>
 
     <!-- Screens / Sections -->
@@ -46,7 +46,7 @@
     <string name="dutch">Dutch</string>
     <string name="vietnamese">Vietnamese</string>
 
-    <string name="stop_recording">Stop Recording</string>
+    <string name="stop_recording">Stop\nRecording</string>
     <string name="search_language">Search language</string>
     <string name="delete">Delete</string>
     <string name="source_language">Source language</string>
@@ -57,4 +57,9 @@
     <string name="permission_dialog_description">Microphone permission is required for live translations. Please enable it in the app settings.</string>
     <string name="open_settings">Open Settings</string>
     <string name="cancel">Cancel</string>
+    <string name="waiting_for_connection">Waiting for connection…</string>
+    <string name="connection_established">Connection established\nStarting Model...</string>
+    <string name="connection_failed">Connection failed</string>
+    <string name="try_again">Try again</string>
+    <string name="recently_used">Recently used</string>
 </resources>

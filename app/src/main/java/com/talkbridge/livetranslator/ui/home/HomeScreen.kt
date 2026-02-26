@@ -202,7 +202,7 @@ fun LoadingBody(
     ) {
         Spacer(modifier = Modifier.weight(1f))
         Text(
-            text = if (!connected) "Warte auf Verbindung..." else "Verbindung hergestellt\nStarte Modell...",
+            text = stringResource(if (!connected) R.string.waiting_for_connection else R.string.connection_established),
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier
                 .weight(2f)
@@ -227,7 +227,7 @@ fun ConnectionFailureBody(
         modifier = modifier
     ) {
         Text(
-            text = "Verbindung fehlgeschlagen",
+            text = stringResource(R.string.connection_failed),
             style = MaterialTheme.typography.bodyMedium,
             color = error,
         )
@@ -235,7 +235,7 @@ fun ConnectionFailureBody(
         Button(
             onClick = { onRetryButtonClick() },
         ) {
-            Text("Erneut versuchen")
+            Text(stringResource(R.string.try_again))
         }
     }
 }
@@ -363,7 +363,6 @@ fun LanguageSwapCard(
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -611,15 +610,6 @@ fun StopButton(
 }
 
 
-@Composable
-fun LoadingTest(modifier: Modifier = Modifier) {
-    CircularProgressIndicator(
-        modifier = Modifier
-            .size(24.dp)
-            .padding(8.dp),
-        strokeWidth = 2.dp
-    )
-}
 
 @Preview(showBackground = true)
 @Composable
@@ -633,10 +623,30 @@ private fun ScreenInactivePreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun ScreenActivePreview() {
+private fun ScreenConnectingPreview() {
+    TalkBridgeLiveTheme {
+        HomeScreen(
+            uiState = HomeUiState(connectionState = ConnectionState.CONNECTING)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ScreenConnectedPreview() {
     TalkBridgeLiveTheme {
         HomeScreen(
             uiState = HomeUiState(connectionState = ConnectionState.CONNECTED)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ScreenActivePreview() {
+    TalkBridgeLiveTheme {
+        HomeScreen(
+            uiState = HomeUiState(connectionState = ConnectionState.READY)
         )
     }
 }
@@ -649,26 +659,7 @@ private fun LanguageSwapCardPreview() {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun StartButtonPreview() {
-    TalkBridgeLiveTheme {
-        StartButton()
-    }
-}
 
-@Preview(showBackground = true)
-@Composable
-private fun StopButtonPreview() {
-    TalkBridgeLiveTheme {
-        StopButton()
-    }
-}
 
-@Preview(showBackground = true)
-@Composable
-private fun TextResultContainerPreview() {
-    TalkBridgeLiveTheme {
-        TextResultContainer()
-    }
-}
+
+

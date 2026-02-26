@@ -8,12 +8,25 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.talkbridge.livetranslator.TalkBridgeApplication
 import com.talkbridge.livetranslator.ui.home.HomeViewModel
+import com.talkbridge.livetranslator.ui.settings.SettingsViewModel
+import com.talkbridge.livetranslator.ui.transcribe.TranscribeViewModel
 
 object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
             HomeViewModel(
                 application = talkBridgeApplication(),
+                userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository
+            )
+        }
+        initializer {
+            TranscribeViewModel(
+                application = talkBridgeApplication(),
+                userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository
+            )
+        }
+        initializer {
+            SettingsViewModel(
                 userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository
             )
         }

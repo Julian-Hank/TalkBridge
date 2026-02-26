@@ -142,7 +142,7 @@ fun LanguageSelectBody(
 //                Log.d("langSelect", recentLanguages.toString())
                 item {
                     Text(
-                        text = "Zuletzt",//stringResource(R.string.recently_used),
+                        text = stringResource(R.string.recently_used),
                         style = MaterialTheme.typography.bodySmall,
                         color = primary,
                         modifier = Modifier

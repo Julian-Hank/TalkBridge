@@ -14,8 +14,8 @@
 
     <!-- Actions / Buttons -->
     <string name="start_live_translate">Starte Live\nÜbersetzung</string>
-    <string name="start_recording">Aufnahme starten</string>
-    <string name="delete_recording">Aufnahme löschen</string>
+    <string name="start_recording">Aufnahme\nstarten</string>
+    <string name="delete_recording">Aufnahme\nlöschen</string>
     <string name="switch_languages">Sprachen tauschen</string>
 
     <!-- Status / Hints -->
@@ -36,6 +36,7 @@
     <string name="chinese">Chinesisch</string>
     <string name="ukrainian">Ukrainisch</string>
     <string name="portuguese">Portugiesisch</string>
+    <string name="spanish">Spanisch</string>
     <string name="turkish">Türkisch</string>
     <string name="italian">Italienisch</string>
     <string name="japanese">Japanisch</string>
@@ -44,7 +45,7 @@
     <string name="dutch">Niederländisch</string>
     <string name="vietnamese">Vietnamesisch</string>
 
-    <string name="stop_recording">Aufnahme Stoppen</string>
+    <string name="stop_recording">Aufnahme\nStoppen</string>
     <string name="app_name_on_homescreen">Live Übersetzer</string>
     <string name="search_language">Sprache suchen</string>
     <string name="delete">Löschen</string>
@@ -56,4 +57,9 @@
     <string name="permission_dialog_description">Die Mikrofon-Berechtigung wird für Live-Übersetzungen benötigt. Bitte aktivieren Sie diese in den App-Einstellungen.</string>
     <string name="open_settings">Einstellungen öffnen</string>
     <string name="cancel">Abbrechen</string>
+    <string name="waiting_for_connection">Warte auf Verbindung…</string>
+    <string name="connection_established">Verbindung hergestellt\nStarte Modell…</string>
+    <string name="connection_failed">Verbindung fehlgeschlagen</string>
+    <string name="try_again">Erneut versuchen</string>
+    <string name="recently_used">Zuletzt verwendet</string>
 </resources>
