@@ -1,6 +1,7 @@
 package com.talkbridge.livetranslator.data
 
 import android.content.Context
+import android.media.AudioManager
 import android.util.Log
 import com.talkbridge.livetranslator.data.audio.AudioOutputManager
 import okhttp3.MediaType.Companion.toMediaType
@@ -44,11 +45,11 @@ class TalkBridgeClient(
 
 
     fun connectWebsocket(
-        ipAddress: String = "192.168.178.74:8000",
+        ipAddress: String = "192.168.178.74",
         sourceLang: String,
         targetLang: String
     ) {
-        val webSocketUrlUrl: String = "ws://$ipAddress/ws/translate"
+        val webSocketUrlUrl = "ws://$ipAddress:80/ws/translate"
 
         val request = Request.Builder()
             .url(webSocketUrlUrl)
@@ -88,8 +89,19 @@ class TalkBridgeClient(
         })
     }
 
-    fun sendAudio(audioData: ByteArray){
-        webSocket?.send(audioData.toByteString())
+    fun sendAudio(audioData: ByteArray, context: Context){
+        if (isAudioOutputBluetooth(context)){
+            webSocket?.send(audioData.toByteString())
+        } else {
+            if (System.currentTimeMillis() > audioOutputManager.audioFinishTime){
+                webSocket?.send(audioData.toByteString())
+            }
+        }
+    }
+
+    fun isAudioOutputBluetooth(context: Context): Boolean {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        return audioManager.isBluetoothA2dpOn
     }
 
     private fun handleJsonMessage(message: String) {
@@ -124,7 +136,7 @@ class TalkBridgeClient(
 
 
     fun sendAudioForTranscript(
-        ipAddress: String = "192.168.178.74:8000",
+        ipAddress: String = "192.168.178.74",
         audioData: ByteArray, lang: String
     ) {
         Log.d(TAG, "Sending audio")
@@ -139,7 +151,7 @@ class TalkBridgeClient(
             .build()
 
         val request = Request.Builder()
-            .url("http://$ipAddress/transcript")
+            .url("http://$ipAddress:80/transcript")
             .post(requestBody)
             .build()
 

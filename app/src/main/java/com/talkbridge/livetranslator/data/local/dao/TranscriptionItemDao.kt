@@ -14,11 +14,15 @@ interface TranscriptionItemDao {
     fun getAllItems(): Flow<List<TranscriptionItem>>
 
     @Query("SELECT * from TranscriptionItems WHERE id = :id")
-    fun getItem(id: Int): Flow<TranscriptionItem>
+    fun getItem(id: Long): Flow<TranscriptionItem>
+
+    @Query("SELECT * from TranscriptionItems WHERE id = :id")
+    suspend fun getItemById(id: Long): TranscriptionItem?
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insert(item: TranscriptionItem)
+    suspend fun insert(item: TranscriptionItem): Long
 
     @Delete
     suspend fun delete(item: TranscriptionItem)
+
 }

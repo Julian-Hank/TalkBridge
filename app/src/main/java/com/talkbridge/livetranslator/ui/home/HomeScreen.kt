@@ -77,8 +77,9 @@ import com.talkbridge.livetranslator.ui.theme.tertiary
 
 object HomeDestination : NavigationDestinationWithIcon {
     override val route = "home"
-    override val titleRes = R.string.app_name
-    override val icon = R.drawable.talkbridge_logo_navbar
+    override val titleRes = R.string.live_translate
+    override val icon = R.drawable.live_translate_icon
+//    override val icon = R.drawable.talkbridge_logo_navbar
 }
 
 private const val TAG: String = "HomeScreen"

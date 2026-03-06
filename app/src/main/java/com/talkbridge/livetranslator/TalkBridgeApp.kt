@@ -1,6 +1,8 @@
 package com.talkbridge.livetranslator
 
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -17,10 +19,13 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.talkbridge.livetranslator.ui.facetoface.FaceToFaceDestination
@@ -48,7 +53,9 @@ fun TalkBridgeTopAppBar(
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     navigateUp: () -> Unit = {},
-    openSettings: () -> Unit = {}
+    openSettings: () -> Unit = {},
+    @DrawableRes actionIcon: Int? = null,
+    onActionClick: () -> Unit = {}
 ) {
 //    val isDark = isSystemInDarkTheme()
     val iconTint = primary
@@ -86,6 +93,20 @@ fun TalkBridgeTopAppBar(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = stringResource(R.string.settings),
                         tint = iconTint
+                    )
+                }
+            }
+        },
+        actions = {
+            if (actionIcon != null) {
+                IconButton(onClick = onActionClick) {
+                    Icon(
+                        painter = painterResource(actionIcon),
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .padding(end = 8.dp)
                     )
                 }
             }
@@ -131,9 +152,17 @@ fun TalkBridgeBottomNavBar(
                             .size(48.dp)
                     )
                 },
-//                label = {
-//                    Text(stringResource(item.titleRes))
-//                }
+
+                label = {
+                    if (item.route == currentRoute) {
+                        Text(
+                            textAlign = TextAlign.Center,
+                            text = stringResource(item.titleRes),
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
+                }
             )
         }
     }

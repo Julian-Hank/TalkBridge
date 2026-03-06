@@ -127,7 +127,7 @@ class HomeViewModel(
         viewModelScope.launch {
             audioRecorder.startRecording { audioData ->
                 try {
-                    talkBridgeClient.sendAudio(audioData)
+                    talkBridgeClient.sendAudio(audioData, context)
                 } catch (e: Exception) {
                     handleError(e.toString())
                 }
@@ -185,11 +185,11 @@ class HomeViewModel(
                     newLanguageCode = stringResToLanguagecode(language.languageName)
                 )
             }
-            _homeUiState.update { currentState ->
-                currentState.copy(
-                    sourceLanguage = language
-                )
-            }
+//            _homeUiState.update { currentState ->
+//                currentState.copy(
+//                    sourceLanguage = language
+//                )
+//            }
         }
     }
 
@@ -208,11 +208,11 @@ class HomeViewModel(
                     newLanguageCode = stringResToLanguagecode(language.languageName)
                 )
             }
-            _homeUiState.update { currentState ->
-                currentState.copy(
-                    targetLanguage = language
-                )
-            }
+//            _homeUiState.update { currentState ->
+//                currentState.copy(
+//                    targetLanguage = language
+//                )
+//            }
         }
     }
 
@@ -220,12 +220,18 @@ class HomeViewModel(
         val sourceLanguage = homeUiState.value.sourceLanguage
         val targetLanguage = homeUiState.value.targetLanguage
 
-        _homeUiState.update { currentState ->
-            currentState.copy(
-                sourceLanguage = targetLanguage,
-                targetLanguage = sourceLanguage
+        viewModelScope.launch {
+            userPreferencesRepository.saveCurrentLanguages(
+                sourceLanguageCode = stringResToLanguagecode(targetLanguage.languageName),
+                targetLanguageCode = stringResToLanguagecode(sourceLanguage.languageName)
             )
         }
+//        _homeUiState.update { currentState ->
+//            currentState.copy(
+//                sourceLanguage = targetLanguage,
+//                targetLanguage = sourceLanguage
+//            )
+//        }
     }
 
     private val stringResToLang = mapOf(

@@ -3,29 +3,25 @@ package com.talkbridge.livetranslator.ui.transcribe
 import android.app.Application
 import android.util.Log
 import androidx.annotation.StringRes
-import androidx.compose.runtime.currentComposer
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
 import com.talkbridge.livetranslator.data.LanguageData
-import com.talkbridge.livetranslator.data.LanguageDataSource.languagesMap
 import com.talkbridge.livetranslator.data.TalkBridgeClient
 import com.talkbridge.livetranslator.data.audio.AudioRecorder
+import com.talkbridge.livetranslator.data.local.entity.TranscriptionItem
+import com.talkbridge.livetranslator.data.repository.TranscriptionItemsRepository
 import com.talkbridge.livetranslator.data.repository.UserPreferencesRepository
+import com.talkbridge.livetranslator.ui.transcribe.TranscriptionState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.sql.Time
-import kotlin.math.exp
-import kotlin.math.pow
-import kotlin.math.sqrt
+import java.time.LocalDate
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -33,6 +29,7 @@ private const val TAG: String = "TranscribeViewModel"
 
 class TranscribeViewModel(
     application: Application,
+    private val transcriptionItemsRepository: TranscriptionItemsRepository,
     private val userPreferencesRepository: UserPreferencesRepository
 ): AndroidViewModel(application) {
     private val context = getApplication<Application>()
@@ -71,20 +68,39 @@ class TranscribeViewModel(
     }
 
     private fun handleServerError(){
-        _transcribeUiState.update { uiState ->
-            uiState.copy(
-                transcriptionState = TranscriptionState.INACTIVE
-            )
-        }
+        resetUiState()
     }
 
     private fun handleTranscriptionResponse(result: String){
         Log.d(TAG, "Transcript: $result")
+        viewModelScope.launch {
+            val id = transcriptionItemsRepository.insertItem(
+                TranscriptionItem(
+                    content = result,
+                    date = LocalDate.now(),
+                    title = "Transcription"
+                )
+            )
+
+            _transcribeUiState.update { uiState ->
+                uiState.copy(
+                    transcriptionProgress = 1f,
+                    transcriptionState = TranscriptionState.FINISHED,
+                    createdItemId = id
+                )
+            }
+        }
+    }
+
+    fun resetUiState(){
         _transcribeUiState.update { uiState ->
             uiState.copy(
-                transcriptionProgress = 1f,
-                transcriptionState = TranscriptionState.FINISHED,
-                TEMP = "Temporäre anzeige\n$result"
+                transcriptionState = TranscriptionState.INACTIVE,
+                timeRecorded = 0,
+                autoDetectLanguage = false,
+                transcriptionProgress  = 0f,
+                timeLeft = 0,
+                createdItemId = 0L
             )
         }
     }
@@ -324,7 +340,7 @@ data class TranscribeUiState(
     val selectedLanguage: LanguageData = LanguageData(R.string.german, R.drawable.germany_flag_circular),
     val transcriptionProgress: Float = 0f,
     val timeLeft: Int = 0,
-    val TEMP: String = ""
+    val createdItemId: Long = 0L
 )
 
 enum class TranscriptionState {

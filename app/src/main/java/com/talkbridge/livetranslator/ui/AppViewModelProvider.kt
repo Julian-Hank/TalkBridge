@@ -9,7 +9,10 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.talkbridge.livetranslator.TalkBridgeApplication
 import com.talkbridge.livetranslator.ui.home.HomeViewModel
 import com.talkbridge.livetranslator.ui.settings.SettingsViewModel
+import com.talkbridge.livetranslator.ui.transcribe.TranscribeItemViewModel
+import com.talkbridge.livetranslator.ui.transcribe.TranscribeItemsViewModel
 import com.talkbridge.livetranslator.ui.transcribe.TranscribeViewModel
+import com.talkbridge.livetranslator.ui.translate.TranslateViewModel
 
 object AppViewModelProvider {
     val Factory = viewModelFactory {
@@ -22,8 +25,23 @@ object AppViewModelProvider {
         initializer {
             TranscribeViewModel(
                 application = talkBridgeApplication(),
+                transcriptionItemsRepository = talkBridgeApplication().container.transcriptionItemsRepository,
                 userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository
             )
+        }
+        initializer {
+            TranscribeItemViewModel(
+                transcriptionItemsRepository = talkBridgeApplication().container.transcriptionItemsRepository,
+                savedStateHandle = this.createSavedStateHandle()
+            )
+        }
+        initializer {
+            TranscribeItemsViewModel(
+                transcriptionItemsRepository = talkBridgeApplication().container.transcriptionItemsRepository,
+            )
+        }
+        initializer {
+            TranslateViewModel()
         }
         initializer {
             SettingsViewModel(

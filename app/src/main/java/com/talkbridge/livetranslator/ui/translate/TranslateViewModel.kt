@@ -13,10 +13,6 @@ class TranslateViewModel: ViewModel() {
     private val _translateUiState = MutableStateFlow(TranslateUiState())
     val translateUiState: StateFlow<TranslateUiState> = _translateUiState.asStateFlow()
 
-    companion object {
-        private const val TIMEOUT_MILLIS = 5_000L
-    }
-
     fun updateSourceLanguage(language: LanguageData){
         _translateUiState.update { currentState ->
             currentState.copy(
@@ -41,6 +37,14 @@ class TranslateViewModel: ViewModel() {
             currentState.copy(
                 sourceLanguage = targetLanguage,
                 targetLanguage = sourceLanguage
+            )
+        }
+    }
+
+    fun setSourceLanguageText(text: String){
+        _translateUiState.update { currentState ->
+            currentState.copy(
+                sourceLanguageText = text
             )
         }
     }

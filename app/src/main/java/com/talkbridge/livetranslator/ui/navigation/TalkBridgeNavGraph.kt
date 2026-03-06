@@ -23,6 +23,12 @@ import com.talkbridge.livetranslator.ui.settings.SettingsDestination
 import com.talkbridge.livetranslator.ui.settings.SettingsScreen
 import com.talkbridge.livetranslator.ui.settings.SettingsViewModel
 import com.talkbridge.livetranslator.ui.transcribe.TranscribeDestination
+import com.talkbridge.livetranslator.ui.transcribe.TranscribeItemViewDestination
+import com.talkbridge.livetranslator.ui.transcribe.TranscribeItemViewModel
+import com.talkbridge.livetranslator.ui.transcribe.TranscribeItemViewScreen
+import com.talkbridge.livetranslator.ui.transcribe.TranscribeItemsOverviewDestination
+import com.talkbridge.livetranslator.ui.transcribe.TranscribeItemsScreen
+import com.talkbridge.livetranslator.ui.transcribe.TranscribeItemsViewModel
 import com.talkbridge.livetranslator.ui.transcribe.TranscribeScreen
 import com.talkbridge.livetranslator.ui.transcribe.TranscribeViewModel
 import com.talkbridge.livetranslator.ui.translate.TranslateDestination
@@ -145,6 +151,12 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
             }
         }
         composable(route = TranslateDestination.route) {
+            val viewModel: TranslateViewModel = viewModel(
+                factory = AppViewModelProvider.Factory
+            )
+
+            val uiState by viewModel.translateUiState.collectAsState()
+
             TranslateScreen(
                 onNavigationButtonClick = { item ->
                     navController.navigate(item.route) {
@@ -157,7 +169,15 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                 },
                 openSettings = {
                     navController.navigate(SettingsDestination.route)
-                }
+                },
+                onSourceLanguageClick = {
+                    navController.navigate("${LanguageSelectDestination.route}/source")
+                },
+                onTargetLanguageClick = {
+                    navController.navigate("${LanguageSelectDestination.route}/target")
+                },
+                onInputChanged = { viewModel.setSourceLanguageText(it) },
+                uiState = uiState
             )
         }
         composable(route = TranscribeDestination.route) {
@@ -193,8 +213,48 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                 onResumeClick = { viewModel.resumeRecording() },
                 onDeleteClick = { viewModel.deleteRecording() },
                 onFinishClick = { viewModel.sendRecording() },
-                waveAmplitudes = amplitudes
+                waveAmplitudes = amplitudes,
+                onViewTranscriptionClick = { id ->
+                    navController.navigate("${TranscribeItemViewDestination.route}/$id")
+                    viewModel.resetUiState()
+                },
+                openTranscriptionsOverview = {
+                    navController.navigate(TranscribeItemsOverviewDestination.route)
+                }
+            )
+        }
+        composable(
+            route = TranscribeItemViewDestination.routeWithArgs,
+            arguments = listOf(
+                navArgument(TranscribeItemViewDestination.transcribeItemArg) {
+                    type = NavType.LongType
+                }
+            )
+        ) { backStackEntry ->
 
+            val viewModel = viewModel<TranscribeItemViewModel>(
+                factory = AppViewModelProvider.Factory
+            )
+
+            TranscribeItemViewScreen(
+                viewModel = viewModel,
+                onBackButtonClick = { navController.navigateUp() }
+            )
+        }
+        composable(route = TranscribeItemsOverviewDestination.route) {
+            val viewModel = viewModel<TranscribeItemsViewModel>(
+                factory = AppViewModelProvider.Factory
+            )
+
+            val uiState by viewModel.transcriptionItemsUiState.collectAsState()
+
+            TranscribeItemsScreen(
+                uiState = uiState,
+                onBackButtonClick = { navController.navigateUp() },
+                navigateToTranscription = { id ->
+                    navController.navigate("${TranscribeItemViewDestination.route}/$id")
+                },
+                deleteItem = { id -> viewModel.deleteItem(id) }
             )
         }
         composable(route = FaceToFaceDestination.route) {

@@ -8,7 +8,11 @@ import android.util.Log
 import com.talkbridge.livetranslator.R
 import java.io.File
 
+private const val TAG = "AudioOutputManager"
+
 class AudioOutputManager(private val context: Context) {
+
+    var audioFinishTime: Long = 0L
 
     // Für kurze System-Sounds (Start/Stop/Error)
     private var soundPool: SoundPool? = null
@@ -16,7 +20,6 @@ class AudioOutputManager(private val context: Context) {
     private var stopSoundId: Int = -1
     private var errorSoundId: Int = -1
 
-    // Für längere Audio-Wiedergabe (TTS vom Backend)
     private var mediaPlayer: MediaPlayer? = null
 
     init {
@@ -50,13 +53,15 @@ class AudioOutputManager(private val context: Context) {
                 setDataSource(tempFile.absolutePath)
                 prepare()
                 start()
+                Log.d(TAG, duration.toString())
+                audioFinishTime = System.currentTimeMillis() + duration - 50
                 setOnCompletionListener {
                     it.release()
                     tempFile.delete()
                 }
             }
         } catch (e: Exception) {
-            Log.e("AudioOutputManager", "Audio playback error: ${e.message}")
+            Log.e(TAG, "Audio playback error: ${e.message}: ${e.cause?.message}")
         }
     }
 
@@ -64,7 +69,7 @@ class AudioOutputManager(private val context: Context) {
         try {
             soundPool?.play(startSoundId, 1f, 1f, 1, 0, 1f)
         } catch (e: Exception) {
-            Log.e("AudioOutputManager", "Error playing start sound", e)
+            Log.e(TAG, "Error playing start sound", e)
         }
     }
 
@@ -72,7 +77,7 @@ class AudioOutputManager(private val context: Context) {
         try {
             soundPool?.play(stopSoundId, 1f, 1f, 1, 0, 1f)
         } catch (e: Exception) {
-            Log.e("AudioOutputManager", "Error playing stop sound", e)
+            Log.e(TAG, "Error playing stop sound", e)
         }
     }
 
@@ -80,7 +85,7 @@ class AudioOutputManager(private val context: Context) {
         try {
             soundPool?.play(errorSoundId, 1f, 1f, 1, 0, 1f)
         } catch (e: Exception) {
-            Log.e("AudioOutputManager", "Error playing error sound", e)
+            Log.e(TAG, "Error playing error sound", e)
         }
     }
 }

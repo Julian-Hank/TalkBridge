@@ -2,13 +2,13 @@ package com.talkbridge.livetranslator.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.sql.Date
+import java.time.LocalDate
 
 @Entity(tableName = "TranscriptionItems")
 data class TranscriptionItem (
     @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    val id: Long = 0L,
     val title: String,
-    val date: Date,
+    val date: LocalDate?,
     val content: String
 )

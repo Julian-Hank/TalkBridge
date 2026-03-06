@@ -15,7 +15,7 @@ import com.talkbridge.livetranslator.ui.navigation.NavigationDestinationWithIcon
 
 object FaceToFaceDestination : NavigationDestinationWithIcon {
     override val route = "face_to_face"
-    override val titleRes = R.string.app_name
+    override val titleRes = R.string.conversation
     override val icon = R.drawable.facetoface
 }
 

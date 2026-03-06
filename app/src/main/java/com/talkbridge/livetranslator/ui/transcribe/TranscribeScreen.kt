@@ -26,11 +26,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.PlayArrow
@@ -50,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,11 +61,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -74,8 +72,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.talkbridge.livetranslator.R
 import com.talkbridge.livetranslator.TalkBridgeBottomNavBar
@@ -83,7 +79,6 @@ import com.talkbridge.livetranslator.TalkBridgeTopAppBar
 import com.talkbridge.livetranslator.data.LanguageData
 import com.talkbridge.livetranslator.ui.navigation.NavigationDestinationWithIcon
 import com.talkbridge.livetranslator.ui.theme.TalkBridgeLiveTheme
-import com.talkbridge.livetranslator.ui.theme.onError
 import com.talkbridge.livetranslator.ui.theme.onSecondary
 import com.talkbridge.livetranslator.ui.theme.primary
 import com.talkbridge.livetranslator.ui.theme.secondary
@@ -109,10 +104,12 @@ fun TranscribeScreen(
     onResumeClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
     onFinishClick: () -> Unit = {},
+    onViewTranscriptionClick: (Long) -> Unit = {},
     onAutoDetectSwitchClick: (Boolean) -> Unit,
     onLanguageItemClick: () -> Unit = {},
     onNavigationButtonClick: (NavigationDestinationWithIcon) -> Unit = {},
-    openSettings: () -> Unit
+    openSettings: () -> Unit,
+    openTranscriptionsOverview: () -> Unit = {}
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
@@ -122,7 +119,9 @@ fun TranscribeScreen(
             TalkBridgeTopAppBar(
                 title = null,
                 canNavigateBack = false,
-                openSettings = openSettings
+                openSettings = openSettings,
+                actionIcon = R.drawable.outline_history_24,
+                onActionClick = openTranscriptionsOverview
             )
         },
         bottomBar = {
@@ -141,6 +140,7 @@ fun TranscribeScreen(
             onResumeClick = onResumeClick,
             onDeleteClick = onDeleteClick,
             onFinishClick = onFinishClick,
+            onViewTranscriptionClick = onViewTranscriptionClick,
             onAutoDetectSwitchClick = onAutoDetectSwitchClick,
             onLanguageItemClick = onLanguageItemClick,
             modifier = modifier
@@ -161,6 +161,7 @@ fun TranscribeBody(
     onResumeClick: () -> Unit,
     onDeleteClick: () -> Unit,
     onFinishClick: () -> Unit,
+    onViewTranscriptionClick: (Long) -> Unit,
     onAutoDetectSwitchClick: (Boolean) -> Unit,
     onLanguageItemClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -193,7 +194,8 @@ fun TranscribeBody(
                 timeLeft = uiState.timeLeft,
                 progress = uiState.transcriptionProgress,
                 modifier = Modifier.weight(3f),
-                temp = uiState
+                onViewTranscriptionClick = onViewTranscriptionClick,
+                createdItemId = uiState.createdItemId,
             )
         } else { // Recording / Paused / stopped
             ActiveTranscribeBody(
@@ -217,7 +219,8 @@ fun FinishedTranscribeBody(
     timeLeft: Int,
     state: TranscriptionState,
     modifier: Modifier = Modifier,
-    temp: TranscribeUiState
+    onViewTranscriptionClick: (Long) -> Unit,
+    createdItemId: Long,
 ) {
     Column(
         modifier = modifier
@@ -272,38 +275,18 @@ fun FinishedTranscribeBody(
             )
             Spacer(modifier = Modifier.height(16.dp))
             if (state == TranscriptionState.TRANSCRIBING){
+                val roundedTimeLeft = (round(timeLeft / 10f) * 10).toInt()
                 Text(
-                    text = "~ ${round(timeLeft / 10f) * 10} seconds",
+                    text = "~ ${if (roundedTimeLeft > 0) roundedTimeLeft else 10} seconds",
                     color = Color.LightGray
                 )
             }
             if (state == TranscriptionState.FINISHED){
                 Spacer(modifier = Modifier.height(32.dp))
-//                Button(onClick = {
-//                }) {
-//                    Text("Transkription ansehen")
-//                }
-                var showDialog by remember { mutableStateOf(true) }
-                if (showDialog){
-                    Dialog(onDismissRequest = { showDialog = false }) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(400.dp)
-                                .padding(16.dp),
-                            shape = RoundedCornerShape(16.dp),
-                        ) {
-                            Text(
-                                text = temp.TEMP,
-                                fontSize = 12.sp,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp)
-//                                .wrapContentSize(Alignment.Center),
-//                            textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
+                Button(onClick = {
+                    onViewTranscriptionClick(createdItemId)
+                }) {
+                    Text("Transkription ansehen")
                 }
             }
         }
@@ -322,6 +305,16 @@ fun ActiveTranscribeBody(
     onFinishClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val view = LocalView.current
+
+    DisposableEffect(true) {
+        view.keepScreenOn = true
+
+        onDispose {
+            view.keepScreenOn = false
+        }
+    }
+
     val formattedTime = remember(elapsedTime) {
         val h = elapsedTime / 3600
         val m = (elapsedTime % 3600) / 60

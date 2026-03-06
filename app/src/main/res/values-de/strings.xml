@@ -10,7 +10,7 @@
     <!-- Main Features -->
     <string name="transcribe">Transkribieren</string>
     <string name="translate">Übersetzen</string>
-    <string name="live_translate">Live-Übersetzung</string>
+    <string name="live_translate">Echtzeit Übersetzung</string>
 
     <!-- Actions / Buttons -->
     <string name="start_live_translate">Starte Live\nÜbersetzung</string>
@@ -62,4 +62,5 @@
     <string name="connection_failed">Verbindung fehlgeschlagen</string>
     <string name="try_again">Erneut versuchen</string>
     <string name="recently_used">Zuletzt verwendet</string>
+    <string name="conversation">Gespräch</string>
 </resources>
