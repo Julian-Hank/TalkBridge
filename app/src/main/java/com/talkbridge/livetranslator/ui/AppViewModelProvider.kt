@@ -41,7 +41,10 @@ object AppViewModelProvider {
             )
         }
         initializer {
-            TranslateViewModel()
+            TranslateViewModel(
+                application = talkBridgeApplication(),
+                userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository
+            )
         }
         initializer {
             SettingsViewModel(

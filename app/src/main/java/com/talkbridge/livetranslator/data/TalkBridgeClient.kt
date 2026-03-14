@@ -38,14 +38,16 @@ class TalkBridgeClient(
     var onReady: (() -> Unit)? = null
     var onError: ((String) -> Unit)? = null
     var onConnected :(() -> Unit)? = null
-    var onTranslationResponse: ((String) -> Unit)? = null
+
     var onTranscriptionResponse: ((String) -> Unit)? = null
     var onTranscriptionError: (() -> Unit)? = null
     var onEstimatedTimeResult: ((Int) -> Unit)? = null
 
+    var onTranslationResponse: ((String) -> Unit)? = null
+    var onTranslationError: (() -> Unit)? = null
 
     fun connectWebsocket(
-        ipAddress: String = "192.168.178.74",
+        ipAddress: String = "192.168.68.53",
         sourceLang: String,
         targetLang: String
     ) {
@@ -136,8 +138,9 @@ class TalkBridgeClient(
 
 
     fun sendAudioForTranscript(
-        ipAddress: String = "192.168.178.74",
-        audioData: ByteArray, lang: String
+        ipAddress: String = "192.168.68.53",
+        audioData: ByteArray,
+        lang: String
     ) {
         Log.d(TAG, "Sending audio")
         val requestBody = MultipartBody.Builder()
@@ -184,6 +187,42 @@ class TalkBridgeClient(
             override fun onFailure(call: Call, e: IOException) {
                 Log.d(TAG, "Error: ${e.message}")
                 onTranscriptionError?.invoke()
+            }
+        })
+    }
+
+    fun sendTextForTranslation(
+        ipAddress: String = "192.168.68.53",
+        text: String = "",
+        sourceLang: String,
+        targetLang: String
+    ){
+        if (text == ""){
+            return
+        }
+        Log.d(TAG, "Sending Text for translation")
+        val requestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("text", text)
+            .addFormDataPart("source_lang", sourceLang)
+            .addFormDataPart("target_lang", targetLang)
+            .build()
+
+        val request = Request.Builder()
+            .url("http://$ipAddress:80/translate")
+            .post(requestBody)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string() ?: return
+                val translated = JSONObject(body).getString("translated")
+                onTranslationResponse?.invoke(translated)
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                Log.d(TAG, "Translation error: ${e.message}")
+                onTranslationError?.invoke()
             }
         })
     }

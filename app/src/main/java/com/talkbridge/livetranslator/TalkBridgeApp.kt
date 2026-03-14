@@ -157,6 +157,7 @@ fun TalkBridgeBottomNavBar(
                     if (item.route == currentRoute) {
                         Text(
                             textAlign = TextAlign.Center,
+                            lineHeight = 10.sp,
                             text = stringResource(item.titleRes),
                             fontSize = 10.sp,
                             modifier = Modifier.padding(bottom = 4.dp)

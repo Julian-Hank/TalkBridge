@@ -54,7 +54,7 @@ class AudioOutputManager(private val context: Context) {
                 prepare()
                 start()
                 Log.d(TAG, duration.toString())
-                audioFinishTime = System.currentTimeMillis() + duration - 50
+                audioFinishTime = System.currentTimeMillis() + duration - 35
                 setOnCompletionListener {
                     it.release()
                     tempFile.delete()

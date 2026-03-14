@@ -1,5 +1,6 @@
 package com.talkbridge.livetranslator.ui.translate
 
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
@@ -40,8 +41,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -72,8 +77,9 @@ fun TranslateScreen(
     modifier: Modifier = Modifier,
     onNavigationButtonClick: (NavigationDestinationWithIcon) -> Unit = {},
     openSettings: () -> Unit,
-    onTargetLanguageClick: () -> Unit = {},
-    onSourceLanguageClick: () -> Unit = {},
+    onTargetLanguageClick: () -> Unit,
+    onSourceLanguageClick: () -> Unit,
+    onLanguageSwapClick: () -> Unit,
     onInputChanged: (String) -> Unit,
     uiState: TranslateUiState
 ) {
@@ -103,6 +109,7 @@ fun TranslateScreen(
             onTargetLanguageClick = onTargetLanguageClick,
             onSourceLanguageClick = onSourceLanguageClick,
             onInputChanged = onInputChanged,
+            onLanguageSwapClick = onLanguageSwapClick,
             uiState = uiState
         )
     }
@@ -113,6 +120,7 @@ fun TranslateBody(
     onTargetLanguageClick: () -> Unit = {},
     onSourceLanguageClick: () -> Unit = {},
     onInputChanged: (String) -> Unit,
+    onLanguageSwapClick: () -> Unit,
     uiState: TranslateUiState,
     modifier: Modifier = Modifier
 ) {
@@ -123,11 +131,13 @@ fun TranslateBody(
             sourceLanguage = uiState.sourceLanguage,
             targetLanguage = uiState.targetLanguage,
             onTargetLanguageClick = onTargetLanguageClick,
-            onSourceLanguageClick = onSourceLanguageClick
+            onSourceLanguageClick = onSourceLanguageClick,
+            onSwapClick = onLanguageSwapClick
         )
         Spacer(modifier = Modifier.height(20.dp))
         TranslateContainer(
             inputText = uiState.sourceLanguageText ?: "",
+            translatedText = uiState.targetLanguageText ?: "",
             onInputChanged = onInputChanged
         )
     }
@@ -141,6 +151,8 @@ fun TranslateContainer(
     modifier: Modifier = Modifier
 ) {
     val minSectionHeight = 140.dp
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
 
     Card(
         modifier = modifier,
@@ -218,16 +230,21 @@ fun TranslateContainer(
                         }
                     )
                 }
-                IconButton(
-                    onClick = { /* copy to clipboard */ },
-                    modifier = Modifier.padding(top = 4.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.content_copy),
-                        contentDescription = "Kopieren",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.Gray
-                    )
+                if (translatedText != ""){
+                    IconButton(
+                        onClick = {
+                            clipboardManager.setText(AnnotatedString(translatedText))
+                            Toast.makeText(context, "Kopiert", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.padding(top = 4.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.content_copy),
+                            contentDescription = "Kopieren",
+                            modifier = Modifier.size(16.dp),
+                            tint = Color.Gray
+                        )
+                    }
                 }
             }
         }

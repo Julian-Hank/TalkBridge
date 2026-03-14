@@ -177,6 +177,7 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                     navController.navigate("${LanguageSelectDestination.route}/target")
                 },
                 onInputChanged = { viewModel.setSourceLanguageText(it) },
+                onLanguageSwapClick = { viewModel.swapLanguages() },
                 uiState = uiState
             )
         }
