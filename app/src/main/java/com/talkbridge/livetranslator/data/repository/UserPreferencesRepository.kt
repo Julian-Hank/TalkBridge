@@ -1,14 +1,10 @@
 package com.talkbridge.livetranslator.data.repository
 
-import android.util.Log
-import androidx.compose.runtime.collectAsState
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
-import com.talkbridge.livetranslator.data.LanguageData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -19,14 +15,9 @@ class UserPreferencesRepository(
 ) {
     private companion object {
         const val TAG = "UserPreferencesRepo"
-        val CURRENT_SOURCE_LANGUAGE = stringPreferencesKey("current_source_language")
-        val CURRENT_TARGET_LANGUAGE = stringPreferencesKey("current_target_language")
-        val RECENT_LANGUAGES = stringPreferencesKey("recent_languages")
-
-        val COSTUM_IP_ADRESS = stringPreferencesKey("costum_ip_adress")
     }
 
-    val costumIPAdress: Flow<String> =
+    val customIPAddress: Flow<String> =
         dataStore.data
             .catch {
                 if (it is IOException) {
@@ -36,11 +27,11 @@ class UserPreferencesRepository(
                 }
             }
             .map { preferences ->
-                preferences[COSTUM_IP_ADRESS] ?: ""
+                preferences[PreferenceKeys.CUSTOM_IP_ADDRESS] ?: ""
             }
 
 
-    val currentSourceLanguage: Flow<String> =
+    val currentLiveSourceLanguage: Flow<String> =
         dataStore.data
             .catch {
                 if (it is IOException) {
@@ -50,10 +41,10 @@ class UserPreferencesRepository(
                 }
             }
             .map { preferences ->
-                preferences[CURRENT_SOURCE_LANGUAGE] ?: "en"
+                preferences[PreferenceKeys.CURRENT_LIVE_SOURCE_LANGUAGE] ?: "en"
             }
 
-    val currentTargetLanguage: Flow<String> =
+    val currentLiveTargetLanguage: Flow<String> =
         dataStore.data
             .catch {
                 if (it is IOException) {
@@ -63,10 +54,10 @@ class UserPreferencesRepository(
                 }
             }
             .map { preferences ->
-                preferences[CURRENT_TARGET_LANGUAGE] ?: "de"
+                preferences[PreferenceKeys.CURRENT_LIVE_TARGET_LANGUAGE] ?: "de"
             }
 
-    val recentLanguages: Flow<List<String>> =
+    val recentLiveLanguages: Flow<List<String>> =
         dataStore.data
             .catch {
                 if (it is IOException) {
@@ -76,36 +67,117 @@ class UserPreferencesRepository(
                 }
             }
             .map { preferences ->
-                preferences[RECENT_LANGUAGES]
+                preferences[PreferenceKeys.RECENT_LIVE_LANGUAGES]
                     ?.split(",")
                     ?.filter { it.isNotBlank() }
                     ?: emptyList()
             }
 
-    suspend fun saveCostumIP(
+    val currentTranslateSourceLanguage: Flow<String> =
+        dataStore.data
+            .catch {
+                if (it is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw it
+                }
+            }
+            .map { preferences ->
+                preferences[PreferenceKeys.CURRENT_TRANSLATE_SOURCE_LANGUAGE] ?: "en"
+            }
+
+    val currentTranslateTargetLanguage: Flow<String> =
+        dataStore.data
+            .catch {
+                if (it is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw it
+                }
+            }
+            .map { preferences ->
+                preferences[PreferenceKeys.CURRENT_TRANSLATE_TARGET_LANGUAGE] ?: "de"
+            }
+
+    val recentTranslateLanguages: Flow<List<String>> =
+        dataStore.data
+            .catch {
+                if (it is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw it
+                }
+            }
+            .map { preferences ->
+                preferences[PreferenceKeys.RECENT_TRANSLATE_LANGUAGES]
+                    ?.split(",")
+                    ?.filter { it.isNotBlank() }
+                    ?: emptyList()
+            }
+
+    val currentTranscribeLanguage: Flow<String> =
+        dataStore.data
+            .catch {
+                if (it is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw it
+                }
+            }
+            .map { preferences ->
+                preferences[PreferenceKeys.CURRENT_TRANSCRIBE_LANGUAGE] ?: "de"
+            }
+
+    val recentTranscribeLanguages: Flow<List<String>> =
+        dataStore.data
+            .catch {
+                if (it is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw it
+                }
+            }
+            .map { preferences ->
+                preferences[PreferenceKeys.RECENT_TRANSCRIBE_LANGUAGES]
+                    ?.split(",")
+                    ?.filter { it.isNotBlank() }
+                    ?: emptyList()
+            }
+
+    suspend fun saveCustomIP(
         ip: String
     ) {
         dataStore.edit { preferences ->
-            preferences[COSTUM_IP_ADRESS] = ip
+            preferences[PreferenceKeys.CUSTOM_IP_ADDRESS] = ip
         }
     }
-
 
     suspend fun saveCurrentLanguages(
         sourceLanguageCode: String,
         targetLanguageCode: String
     ) {
         dataStore.edit { preferences ->
-            preferences[CURRENT_SOURCE_LANGUAGE] = sourceLanguageCode
-            preferences[CURRENT_TARGET_LANGUAGE] = targetLanguageCode
+            preferences[PreferenceKeys.CURRENT_LIVE_SOURCE_LANGUAGE] = sourceLanguageCode
+            preferences[PreferenceKeys.CURRENT_LIVE_TARGET_LANGUAGE] = targetLanguageCode
         }
     }
 
-    suspend fun addRecentLanguage(newLanguageCode: String) {
+    suspend fun saveTranscribeLanguage(
+        language: String
+    ){
+        dataStore.edit { preferences ->
+            preferences[PreferenceKeys.CURRENT_TRANSCRIBE_LANGUAGE] = language
+        }
+    }
+
+    suspend fun addRecentLanguage(
+        key: Preferences.Key<String>,
+        newLanguageCode: String
+    ) {
         dataStore.edit { preferences ->
 
             val current =
-                preferences[RECENT_LANGUAGES]
+                preferences[key]
                     ?.split(",")
                     ?.toMutableList()
                     ?: mutableListOf()
@@ -115,9 +187,23 @@ class UserPreferencesRepository(
 
             val limited = current.take(4)
 
-            preferences[RECENT_LANGUAGES] =
-                limited.joinToString(",")
+            preferences[key] = limited.joinToString(",")
         }
     }
 
+}
+
+object PreferenceKeys {
+    val CURRENT_LIVE_SOURCE_LANGUAGE = stringPreferencesKey("current_live_source_language")
+    val CURRENT_LIVE_TARGET_LANGUAGE = stringPreferencesKey("current_live_target_language")
+    val RECENT_LIVE_LANGUAGES = stringPreferencesKey("recent_live_languages")
+
+    val CURRENT_TRANSLATE_SOURCE_LANGUAGE = stringPreferencesKey("current_translate_source_language")
+    val CURRENT_TRANSLATE_TARGET_LANGUAGE = stringPreferencesKey("current_translate_target_language")
+    val RECENT_TRANSLATE_LANGUAGES = stringPreferencesKey("recent_translate_languages")
+
+    val CURRENT_TRANSCRIBE_LANGUAGE = stringPreferencesKey("current_transcribe_language")
+    val RECENT_TRANSCRIBE_LANGUAGES = stringPreferencesKey("recent_transcribe_languages")
+
+    val CUSTOM_IP_ADDRESS = stringPreferencesKey("custom_ip_address")
 }

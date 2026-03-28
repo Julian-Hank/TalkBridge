@@ -1,7 +1,5 @@
 package com.talkbridge.livetranslator.ui.settings
 
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.data.repository.UserPreferencesRepository
@@ -26,41 +24,29 @@ class SettingsViewModel(
 
     private fun setAllPreferences() {
         viewModelScope.launch {
-            userPreferencesRepository.costumIPAdress
+            userPreferencesRepository.customIPAddress
                 .collect {
                     _settingsUiState.update { uiState ->
                         uiState.copy(
-                            costumIP = it
+                            customIP = it
                         )
                     }
                 }
         }
     }
 
-    fun setCostumIP(ip: String){
+    fun setCustomIP(ip: String){
         _settingsUiState.update { uiState ->
             uiState.copy(
-                costumIP = ip
+                customIP = ip
             )
         }
         viewModelScope.launch {
-            userPreferencesRepository.saveCostumIP(ip)
+            userPreferencesRepository.saveCustomIP(ip)
         }
     }
-
-//    fun toggleServerSelection(){
-//        val currentSelection = settingsUiState.value.serverSelection
-//        _settingsUiState.update { uiState ->
-//            uiState.copy(
-//                serverSelection = if (currentSelection == "local") "render" else "local"
-//            )
-//        }
-//        viewModelScope.launch {
-//            userPreferencesRepository.setServerSelection(settingsUiState.value.serverSelection)
-//        }
-//    }
 }
 
 data class SettingsUiState(
-    val costumIP: String = ""
+    val customIP: String = ""
 )

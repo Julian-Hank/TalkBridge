@@ -257,7 +257,7 @@ fun FinishedTranscribeBody(
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 textAlign = TextAlign.Center,
-                text = if (state == TranscriptionState.CONNECTING) "Verbindung zum Server\nwird hergestellt" else if (state == TranscriptionState.TRANSCRIBING) "Aufnahme wird verarbeitet" else "Transkription bereit"
+                text = stringResource(if (state == TranscriptionState.CONNECTING) R.string.connecting else if (state == TranscriptionState.TRANSCRIBING) R.string.recording_processed else R.string.transcription_ready)
             )
         }
         Column (
@@ -277,7 +277,7 @@ fun FinishedTranscribeBody(
             if (state == TranscriptionState.TRANSCRIBING){
                 val roundedTimeLeft = (round(timeLeft / 10f) * 10).toInt()
                 Text(
-                    text = "~ ${if (roundedTimeLeft > 0) roundedTimeLeft else 10} seconds",
+                    text = stringResource(R.string.time_left, if (roundedTimeLeft > 0) roundedTimeLeft else 10),
                     color = Color.LightGray
                 )
             }
@@ -286,7 +286,9 @@ fun FinishedTranscribeBody(
                 Button(onClick = {
                     onViewTranscriptionClick(createdItemId)
                 }) {
-                    Text("Transkription ansehen")
+                    Text(
+                        text = stringResource(R.string.view_transcription)
+                    )
                 }
             }
         }
@@ -375,7 +377,7 @@ fun ActiveTranscribeBody(
                 if (state == TranscriptionState.STOPPED){
                     Icon(
                         imageVector = Icons.Filled.Done,
-                        contentDescription = "Finish",
+                        contentDescription = stringResource(R.string.stop_recording),
                         tint = Color.White,
                         modifier = Modifier.size(40.dp)
                     )
@@ -400,7 +402,7 @@ fun ActiveTranscribeBody(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.baseline_pause_24),
-                        contentDescription = "Pause",
+                        contentDescription = stringResource(R.string.pause),
                         tint = primary,
                         modifier = Modifier.size(32.dp)
                     )
@@ -414,7 +416,7 @@ fun ActiveTranscribeBody(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = "Resume",
+                        contentDescription = stringResource(R.string.resume),
                         tint = primary,
                         modifier = Modifier.size(32.dp)
                     )
@@ -428,7 +430,7 @@ fun ActiveTranscribeBody(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Delete,
-                        contentDescription = "Resume",
+                        contentDescription = stringResource(R.string.resume),
                         tint = primary,
                         modifier = Modifier.size(32.dp)
                     )
@@ -540,7 +542,7 @@ fun LanguageSelectCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Automatisch erkennen",
+                        text = stringResource(R.string.auto_detect),
                         modifier = Modifier.padding(end = 16.dp),
                         color = if (autoDetectLanguage) primary else Color.Gray
                     )
@@ -555,7 +557,7 @@ fun LanguageSelectCard(
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Sprache wählen",
+                    text = stringResource(R.string.choose_lang),
                     color = if (autoDetectLanguage) Color.Gray else primary
                 )
                 Spacer(modifier = Modifier.height(12.dp))

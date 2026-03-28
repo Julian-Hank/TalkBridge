@@ -4,6 +4,8 @@ import android.content.Context
 import android.media.AudioManager
 import android.util.Log
 import com.talkbridge.livetranslator.data.audio.AudioOutputManager
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -15,17 +17,17 @@ import okhttp3.WebSocketListener
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
-import okhttp3.Callback
-import okhttp3.Call
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 private const val TAG: String = "TalkBridgeClient"
+private const val DEFAULT_IP = "192.168.68.60"
 
 class TalkBridgeClient(
-    context: Context,
-//    private val ipAddress: String = "192.168.178.74:8000" //  ws://192.168.178.74:8000/ws/translate
+    private val context: Context,
 ) {
+    var serverIpAddress: String = DEFAULT_IP
+        private set
 
     private var webSocket: WebSocket? = null
     private val client = OkHttpClient.Builder()
@@ -43,15 +45,20 @@ class TalkBridgeClient(
     var onTranscriptionError: (() -> Unit)? = null
     var onEstimatedTimeResult: ((Int) -> Unit)? = null
 
+    var onLiveTranslationResponse: ((String) -> Unit)? = null
+
     var onTranslationResponse: ((String) -> Unit)? = null
     var onTranslationError: (() -> Unit)? = null
 
+    fun updateIpAddress(ip: String) {
+        serverIpAddress = ip.ifBlank { DEFAULT_IP }
+    }
+
     fun connectWebsocket(
-        ipAddress: String = "192.168.68.53",
         sourceLang: String,
         targetLang: String
     ) {
-        val webSocketUrlUrl = "ws://$ipAddress:80/ws/translate"
+        val webSocketUrlUrl = "ws://$serverIpAddress:80/ws/translate"
 
         val request = Request.Builder()
             .url(webSocketUrlUrl)
@@ -91,7 +98,7 @@ class TalkBridgeClient(
         })
     }
 
-    fun sendAudio(audioData: ByteArray, context: Context){
+    fun sendAudio(audioData: ByteArray){
         if (isAudioOutputBluetooth(context)){
             webSocket?.send(audioData.toByteString())
         } else {
@@ -120,11 +127,11 @@ class TalkBridgeClient(
                 }
                 "partial" -> {
                     val text = json.getString("text")
-                    onTranslationResponse?.invoke(text)
+                    onLiveTranslationResponse?.invoke(text)
                 }
                 "final" -> {
                     val text = json.getString("text")
-                    onTranslationResponse?.invoke(text)
+                    onLiveTranslationResponse?.invoke(text)
                 }
             }
         } catch (e: Exception) {
@@ -138,7 +145,6 @@ class TalkBridgeClient(
 
 
     fun sendAudioForTranscript(
-        ipAddress: String = "192.168.68.53",
         audioData: ByteArray,
         lang: String
     ) {
@@ -154,7 +160,7 @@ class TalkBridgeClient(
             .build()
 
         val request = Request.Builder()
-            .url("http://$ipAddress:80/transcript")
+            .url("http://$serverIpAddress:80/transcript")
             .post(requestBody)
             .build()
 
@@ -192,7 +198,6 @@ class TalkBridgeClient(
     }
 
     fun sendTextForTranslation(
-        ipAddress: String = "192.168.68.53",
         text: String = "",
         sourceLang: String,
         targetLang: String
@@ -209,7 +214,7 @@ class TalkBridgeClient(
             .build()
 
         val request = Request.Builder()
-            .url("http://$ipAddress:80/translate")
+            .url("http://$serverIpAddress:80/translate")
             .post(requestBody)
             .build()
 

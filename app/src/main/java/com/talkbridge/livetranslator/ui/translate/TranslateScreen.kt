@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,9 +20,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.twotone.Build
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,7 +37,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -57,10 +52,8 @@ import com.talkbridge.livetranslator.TalkBridgeTopAppBar
 import com.talkbridge.livetranslator.data.Language
 import com.talkbridge.livetranslator.data.LanguageData
 import com.talkbridge.livetranslator.data.LanguageDataSource
-import com.talkbridge.livetranslator.ui.navigation.NavigationDestination
 import com.talkbridge.livetranslator.ui.navigation.NavigationDestinationWithIcon
 import com.talkbridge.livetranslator.ui.theme.TalkBridgeLiveTheme
-import com.talkbridge.livetranslator.ui.theme.onTertiary
 import com.talkbridge.livetranslator.ui.theme.primary
 import com.talkbridge.livetranslator.ui.theme.secondary
 import com.talkbridge.livetranslator.ui.theme.tertiary
@@ -179,7 +172,7 @@ fun TranslateContainer(
                         Box {
                             if (inputText.isEmpty()) {
                                 Text(
-                                    text = "Text Eingeben",
+                                    text = stringResource(R.string.enter_text),
                                     style = MaterialTheme.typography.displayMedium,
                                     color = primary.copy(alpha = 0.5f)
                                 )
@@ -220,7 +213,7 @@ fun TranslateContainer(
                             Box {
                                 if (translatedText.isEmpty()) {
                                     Text(
-                                        text = "Übersetzung",
+                                        text = stringResource(R.string.translation),
                                         style = MaterialTheme.typography.displayMedium,
                                         color = primary.copy(alpha = 0.5f)
                                     )
@@ -231,16 +224,17 @@ fun TranslateContainer(
                     )
                 }
                 if (translatedText != ""){
+                    val toastText = stringResource(R.string.copied)
                     IconButton(
                         onClick = {
                             clipboardManager.setText(AnnotatedString(translatedText))
-                            Toast.makeText(context, "Kopiert", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, toastText, Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier.padding(top = 4.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.content_copy),
-                            contentDescription = "Kopieren",
+                            contentDescription = stringResource(R.string.copy),
                             modifier = Modifier.size(16.dp),
                             tint = Color.Gray
                         )

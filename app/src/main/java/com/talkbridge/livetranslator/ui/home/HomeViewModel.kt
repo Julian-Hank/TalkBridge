@@ -1,16 +1,17 @@
 package com.talkbridge.livetranslator.ui.home
 
-import android.app.Application
-import androidx.annotation.StringRes
-import androidx.lifecycle.AndroidViewModel
+import android.util.Log
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
-import com.talkbridge.livetranslator.data.Language
 import com.talkbridge.livetranslator.data.LanguageData
 import com.talkbridge.livetranslator.data.LanguageDataSource.languagesMap
 import com.talkbridge.livetranslator.data.TalkBridgeClient
 import com.talkbridge.livetranslator.data.audio.AudioRecorder
+import com.talkbridge.livetranslator.data.languagecodeToLanguageObject
+import com.talkbridge.livetranslator.data.repository.PreferenceKeys
 import com.talkbridge.livetranslator.data.repository.UserPreferencesRepository
+import com.talkbridge.livetranslator.data.stringResToLanguagecode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,18 +22,14 @@ import kotlinx.coroutines.launch
 private const val TAG: String = "HomeViewModel"
 
 class HomeViewModel(
-    application: Application,
+    private val talkBridgeClient: TalkBridgeClient,
     private val userPreferencesRepository: UserPreferencesRepository
-): AndroidViewModel(application) {
-    private val context = getApplication<Application>()
+): ViewModel() {
 
-    private val talkBridgeClient = TalkBridgeClient(context)
     private val audioRecorder = AudioRecorder()
 
     private val _homeUiState = MutableStateFlow(HomeUiState())
     val homeUiState: StateFlow<HomeUiState> = _homeUiState.asStateFlow()
-
-    private lateinit var customIPAddress: String
 
     init {
         observePreferences()
@@ -41,11 +38,11 @@ class HomeViewModel(
 
     private fun observePreferences() {
         viewModelScope.launch {
-            userPreferencesRepository.currentSourceLanguage
-                .combine(userPreferencesRepository.currentTargetLanguage) { source, target ->
+            userPreferencesRepository.currentLiveSourceLanguage
+                .combine(userPreferencesRepository.currentLiveTargetLanguage) { source, target ->
                     source to target
                 }
-                .combine(userPreferencesRepository.recentLanguages) { pair, recent ->
+                .combine(userPreferencesRepository.recentLiveLanguages) { pair, recent ->
                     Triple(pair.first, pair.second, recent)
                 }
                 .collect { (source, target, recent) ->
@@ -64,8 +61,8 @@ class HomeViewModel(
                 }
         }
         viewModelScope.launch {
-            userPreferencesRepository.costumIPAdress.collect {
-                customIPAddress = it
+            userPreferencesRepository.customIPAddress.collect {
+                talkBridgeClient.updateIpAddress(it)
             }
         }
     }
@@ -74,7 +71,11 @@ class HomeViewModel(
         talkBridgeClient.onReady = { handleServerReady() }
         talkBridgeClient.onConnected = { handleServerConnected() }
         talkBridgeClient.onError = { error -> handleError(error) }
-        talkBridgeClient.onTranslationResponse = { text -> setCurrentText(text) }
+        talkBridgeClient.onLiveTranslationResponse = {
+            text -> setCurrentText(text)
+            Log.d(TAG, text)
+            Log.d(TAG, "TEST")
+        }
     }
 
     private fun handleServerConnected() {
@@ -109,25 +110,17 @@ class HomeViewModel(
                 connectionState = ConnectionState.CONNECTING
             )
         }
-        if (customIPAddress == ""){
-            talkBridgeClient.connectWebsocket(
-                sourceLang = stringResToLanguagecode(homeUiState.value.sourceLanguage.languageName),
-                targetLang = stringResToLanguagecode(homeUiState.value.targetLanguage.languageName),
-            )
-        } else {
-            talkBridgeClient.connectWebsocket(
-                ipAddress = customIPAddress,
-                sourceLang = stringResToLanguagecode(homeUiState.value.sourceLanguage.languageName),
-                targetLang = stringResToLanguagecode(homeUiState.value.targetLanguage.languageName),
-            )
-        }
+        talkBridgeClient.connectWebsocket(
+            sourceLang = stringResToLanguagecode(homeUiState.value.sourceLanguage.languageName),
+            targetLang = stringResToLanguagecode(homeUiState.value.targetLanguage.languageName),
+        )
     }
 
     fun startRecording() {
         viewModelScope.launch {
             audioRecorder.startRecording { audioData ->
                 try {
-                    talkBridgeClient.sendAudio(audioData, context)
+                    talkBridgeClient.sendAudio(audioData)
                 } catch (e: Exception) {
                     handleError(e.toString())
                 }
@@ -182,14 +175,10 @@ class HomeViewModel(
                     targetLanguageCode = stringResToLanguagecode(targetLanguage.languageName)
                 )
                 userPreferencesRepository.addRecentLanguage(
-                    newLanguageCode = stringResToLanguagecode(language.languageName)
+                    newLanguageCode = stringResToLanguagecode(language.languageName),
+                    key = PreferenceKeys.RECENT_LIVE_LANGUAGES
                 )
             }
-//            _homeUiState.update { currentState ->
-//                currentState.copy(
-//                    sourceLanguage = language
-//                )
-//            }
         }
     }
 
@@ -205,14 +194,10 @@ class HomeViewModel(
                     targetLanguageCode = stringResToLanguagecode(language.languageName)
                 )
                 userPreferencesRepository.addRecentLanguage(
-                    newLanguageCode = stringResToLanguagecode(language.languageName)
+                    newLanguageCode = stringResToLanguagecode(language.languageName),
+                    key = PreferenceKeys.RECENT_LIVE_LANGUAGES
                 )
             }
-//            _homeUiState.update { currentState ->
-//                currentState.copy(
-//                    targetLanguage = language
-//                )
-//            }
         }
     }
 
@@ -226,57 +211,7 @@ class HomeViewModel(
                 targetLanguageCode = stringResToLanguagecode(sourceLanguage.languageName)
             )
         }
-//        _homeUiState.update { currentState ->
-//            currentState.copy(
-//                sourceLanguage = targetLanguage,
-//                targetLanguage = sourceLanguage
-//            )
-//        }
     }
-
-    private val stringResToLang = mapOf(
-        R.string.dutch to "nl",
-        R.string.english to "en",
-        R.string.french to "fr",
-        R.string.german to "de",
-        R.string.italian to "it",
-        R.string.japanese to "ja",
-        R.string.korean to "ko",
-        R.string.polish to "pl",
-        R.string.portuguese to "pt",
-        R.string.russian to "ru",
-        R.string.spanish to "es",
-        R.string.swedish to "sv",
-        R.string.turkish to "tr",
-        R.string.ukrainian to "uk",
-        R.string.vietnamese to "vi",
-        R.string.chinese to "zh"
-    )
-
-    private val langToLanguageObject = mapOf(
-        "nl" to Language.DUTCH,
-        "en" to Language.ENGLISH,
-        "fr" to Language.FRENCH,
-        "de" to Language.GERMAN,
-        "it" to Language.ITALIAN,
-        "ja" to Language.JAPANESE,
-        "ko" to Language.KOREAN,
-        "pl" to Language.POLISH,
-        "pt" to Language.PORTUGUESE,
-        "ru" to Language.RUSSIAN,
-        "es" to Language.SPANISH,
-        "sv" to Language.SWEDISH,
-        "tr" to Language.TURKISH,
-        "uk" to Language.UKRAINIAN,
-        "vi" to Language.VIETNAMESE,
-        "zh" to Language.CHINESE
-    )
-
-    private fun stringResToLanguagecode(@StringRes stringRes: Int): String =
-        stringResToLang[stringRes] ?: "en"
-
-    private fun languagecodeToLanguageObject(languagecode: String): Language =
-        langToLanguageObject[languagecode] ?: Language.ENGLISH
 }
 
 data class HomeUiState(

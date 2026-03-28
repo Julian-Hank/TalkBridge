@@ -1,7 +1,6 @@
 package com.talkbridge.livetranslator.ui.transcribe
 
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,7 +25,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,7 +48,7 @@ import com.talkbridge.livetranslator.ui.theme.tertiary
 
 object TranscribeItemsOverviewDestination : NavigationDestination {
     override val route = "transcribeItemsOverview"
-    override val titleRes = R.string.transcribe
+    override val titleRes = R.string.transcriptions
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,7 +91,7 @@ fun TranscribeItemsBody(
     LazyColumn (modifier = modifier) {
         if (uiState.transcriptionItemsList.isEmpty()){
             item{
-                Text("Noch keine Transkriptionen")
+                Text(text = stringResource(R.string.no_transcriptions))
             }
         } else {
             items(items = uiState.transcriptionItemsList) { item ->
@@ -191,16 +188,16 @@ fun DeleteDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Eintrag löschen") },
-        text = { Text("Möchtest du diesen Eintrag wirklich löschen?") },
+        title = { Text(text = stringResource(R.string.delete_entry)) },
+        text = { Text(text = stringResource(R.string.sure_delete_entry)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Löschen", color = error)
+                Text(text = stringResource(R.string.delete), color = error)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Abbrechen")
+                Text(text = stringResource(R.string.cancel))
             }
         }
     )

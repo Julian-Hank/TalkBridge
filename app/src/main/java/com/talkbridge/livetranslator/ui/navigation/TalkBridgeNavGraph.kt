@@ -1,9 +1,9 @@
 package com.talkbridge.livetranslator.ui.navigation
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -93,13 +93,16 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
             ) ?: "source"
 
             val previousRoute = navController.previousBackStackEntry?.destination?.route
-
+            
             when (previousRoute) {
                 HomeDestination.route -> {
                     val homeViewModel: HomeViewModel = viewModel(
                         viewModelStoreOwner = navController.previousBackStackEntry!!,
                         factory = AppViewModelProvider.Factory
                     )
+                    val recentLanguages = remember {
+                        homeViewModel.homeUiState.value.recentLanguages
+                    }
                     LanguageSelectScreen(
                         languageType = languageType,
                         onBackButtonClick = { navController.navigateUp() },
@@ -111,7 +114,7 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                             }
                             navController.navigateUp()
                         },
-                        recentLanguages = homeViewModel.homeUiState.collectAsState().value.recentLanguages
+                        recentLanguages = recentLanguages //homeViewModel.homeUiState.collectAsState().value.recentLanguages
                     )
                 }
 
@@ -139,15 +142,21 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                         viewModelStoreOwner = navController.previousBackStackEntry!!,
                         factory = AppViewModelProvider.Factory
                     )
+                    val recentLanguages = remember {
+                        transcribeViewModel.transcribeUiState.value.recentLanguages
+                    }
                     LanguageSelectScreen(
                         languageType = languageType,
                         onBackButtonClick = { navController.navigateUp() },
                         onLanguageSelected = { language ->
                             transcribeViewModel.updateSourceLanguage(language)
                             navController.navigateUp()
-                        }
+                        },
+                        recentLanguages = recentLanguages//transcribeViewModel.transcribeUiState.collectAsState().value.recentLanguages
                     )
                 }
+
+
             }
         }
         composable(route = TranslateDestination.route) {

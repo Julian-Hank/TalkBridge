@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
@@ -41,7 +40,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,6 +70,7 @@ import com.talkbridge.livetranslator.ui.theme.TalkBridgeLiveTheme
 import com.talkbridge.livetranslator.ui.theme.error
 import com.talkbridge.livetranslator.ui.theme.onTertiary
 import com.talkbridge.livetranslator.ui.theme.primary
+import com.talkbridge.livetranslator.ui.theme.secondary
 import com.talkbridge.livetranslator.ui.theme.stopColor
 import com.talkbridge.livetranslator.ui.theme.tertiary
 
@@ -101,14 +100,14 @@ fun HomeScreen(
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-    val canNavigateBack = remember { mutableStateOf(false) }
+    val canNavigateBack = uiState.connectionState == ConnectionState.FAILED
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TalkBridgeTopAppBar(
                 title = null,
-                canNavigateBack = canNavigateBack.value,
+                canNavigateBack = canNavigateBack,
                 navigateUp = onBackButtonClick,
                 openSettings = openSettings
             )
@@ -127,7 +126,6 @@ fun HomeScreen(
             onTargetLanguageClick = onTargetLanguageClick,
             onStartButtonClick = onStartButtonClick,
             onStopButtonClick = onStopButtonClick,
-            canNavigateBackState = canNavigateBack,
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -144,12 +142,10 @@ fun HomeBody(
     onSourceLanguageClick: () -> Unit,
     onStartButtonClick: () -> Unit,
     onStopButtonClick: () -> Unit,
-    canNavigateBackState: MutableState<Boolean>,
     modifier: Modifier = Modifier,
 ) {
     when (uiState.connectionState){
         ConnectionState.NOT_CONNECTED -> {
-            canNavigateBackState.value = false
             InactiveHomeBody(
                 uiState = uiState,
                 onSwapClick = onLanguageSwapClick,
@@ -160,21 +156,18 @@ fun HomeBody(
             )
         }
         ConnectionState.CONNECTING -> {
-            canNavigateBackState.value = false
             LoadingBody(
                 connected = false,
                 modifier = modifier
             )
         }
         ConnectionState.CONNECTED -> {
-            canNavigateBackState.value = false
             LoadingBody(
                 connected = true,
                 modifier = modifier
             )
         }
         ConnectionState.READY -> {
-            canNavigateBackState.value = false
             ActiveHomeBody(
                 uiState = uiState,
                 onStopButtonClick = onStopButtonClick,
@@ -182,7 +175,6 @@ fun HomeBody(
             )
         }
         ConnectionState.FAILED -> {
-            canNavigateBackState.value = true
             ConnectionFailureBody(
                 onRetryButtonClick = onStartButtonClick,
                 modifier = modifier
@@ -509,7 +501,7 @@ fun StartButton(
             // äußerer Kreis (Stroke)
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawCircle(
-                    color = Color(0xFF3A7CA5),
+                    color = secondary,
                     style = Stroke(width = 3.dp.toPx()),
                     radius = size.minDimension / 1.6f
                 )

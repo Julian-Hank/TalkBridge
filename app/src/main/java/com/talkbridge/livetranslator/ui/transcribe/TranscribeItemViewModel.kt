@@ -5,18 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.data.local.entity.TranscriptionItem
 import com.talkbridge.livetranslator.data.repository.TranscriptionItemsRepository
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 class TranscribeItemViewModel(
     savedStateHandle: SavedStateHandle,
-    val transcriptionItemsRepository: TranscriptionItemsRepository
+    transcriptionItemsRepository: TranscriptionItemsRepository
 ) : ViewModel() {
 
     private val transcriptionItemId: Long = checkNotNull(savedStateHandle["id"])

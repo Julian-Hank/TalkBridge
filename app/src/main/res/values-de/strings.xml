@@ -63,4 +63,22 @@
     <string name="try_again">Erneut versuchen</string>
     <string name="recently_used">Zuletzt verwendet</string>
     <string name="conversation">Gespräch</string>
+
+    <string name="connecting">Verbindung zum Server\nwird hergestellt</string>
+    <string name="transcription_ready">Transkription bereit</string>
+    <string name="recording_processed">Aufnahme wird verarbeitet</string>
+    <string name="view_transcription">Transkription ansehen</string>
+    <string name="time_left">%d Sekunden</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Weiter</string>
+    <string name="auto_detect">Automatisch erkennen</string>
+    <string name="choose_lang">Sprache wählen</string>
+    <string name="transcriptions">Transkriptionen</string>
+    <string name="no_transcriptions">Noch keine Transkriptionen</string>
+    <string name="delete_entry">Eintrag löschen</string>
+    <string name="sure_delete_entry">Möchtest du diesen Eintrag wirklich löschen?</string>
+    <string name="enter_text">Text Eingeben</string>
+    <string name="translation">Übersetzung</string>
+    <string name="copied">Kopiert</string>
+    <string name="copy">Kopieren</string>
 </resources>

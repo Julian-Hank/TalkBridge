@@ -62,4 +62,21 @@
     <string name="try_again">Try again</string>
     <string name="recently_used">Recently used</string>
     <string name="conversation">Conversation</string>
+    <string name="connecting">Connection to the server\nis being established</string>
+    <string name="transcription_ready">Transcription_ready</string>
+    <string name="recording_processed">Recording is being processed</string>
+    <string name="view_transcription">View transcription</string>
+    <string name="time_left">%d seconds</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="auto_detect">Auto detect</string>
+    <string name="choose_lang">Choose language</string>
+    <string name="transcriptions">Transcriptions</string>
+    <string name="no_transcriptions">No transcriptions yet</string>
+    <string name="delete_entry">Delete entry</string>
+    <string name="sure_delete_entry">Are you sure you want to delete this entry?</string>
+    <string name="enter_text">Enter text</string>
+    <string name="translation">Translation</string>
+    <string name="copied">Copied</string>
+    <string name="copy">Copy</string>
 </resources>

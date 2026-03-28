@@ -18,15 +18,15 @@ object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
             HomeViewModel(
-                application = talkBridgeApplication(),
-                userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository
+                userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository,
+                talkBridgeClient = talkBridgeApplication().container.talkBridgeClient
             )
         }
         initializer {
             TranscribeViewModel(
-                application = talkBridgeApplication(),
                 transcriptionItemsRepository = talkBridgeApplication().container.transcriptionItemsRepository,
-                userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository
+                userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository,
+                talkBridgeClient = talkBridgeApplication().container.talkBridgeClient
             )
         }
         initializer {
@@ -42,8 +42,8 @@ object AppViewModelProvider {
         }
         initializer {
             TranslateViewModel(
-                application = talkBridgeApplication(),
-                userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository
+                userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository,
+                talkBridgeClient = talkBridgeApplication().container.talkBridgeClient
             )
         }
         initializer {

@@ -4,8 +4,6 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.talkbridge.livetranslator.data.local.dao.TranscriptionItemDao
-import com.talkbridge.livetranslator.data.local.entity.TranscriptionItem
 import com.talkbridge.livetranslator.data.repository.TranscriptionItemsRepository
 import com.talkbridge.livetranslator.data.repository.TranslationHistoryItemsRepository
 import com.talkbridge.livetranslator.data.repository.UserPreferencesRepository
@@ -14,6 +12,8 @@ interface AppContainer {
     val transcriptionItemsRepository: TranscriptionItemsRepository
     val translationHistoryItemsRepository: TranslationHistoryItemsRepository
     val userPreferencesRepository: UserPreferencesRepository
+    val talkBridgeClient: TalkBridgeClient
+
 }
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
@@ -29,5 +29,8 @@ class AppDataContainer(private val context: Context) : AppContainer {
     }
     override val userPreferencesRepository: UserPreferencesRepository by lazy {
         UserPreferencesRepository(context.dataStore)
+    }
+    override val talkBridgeClient: TalkBridgeClient by lazy {
+        TalkBridgeClient(context)
     }
 }

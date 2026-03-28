@@ -1,22 +1,24 @@
 package com.talkbridge.livetranslator.ui.transcribe
 
-import android.app.Application
 import android.util.Log
-import androidx.annotation.StringRes
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
 import com.talkbridge.livetranslator.data.LanguageData
+import com.talkbridge.livetranslator.data.LanguageDataSource.languagesMap
 import com.talkbridge.livetranslator.data.TalkBridgeClient
 import com.talkbridge.livetranslator.data.audio.AudioRecorder
+import com.talkbridge.livetranslator.data.languagecodeToLanguageObject
 import com.talkbridge.livetranslator.data.local.entity.TranscriptionItem
+import com.talkbridge.livetranslator.data.repository.PreferenceKeys
 import com.talkbridge.livetranslator.data.repository.TranscriptionItemsRepository
 import com.talkbridge.livetranslator.data.repository.UserPreferencesRepository
-import com.talkbridge.livetranslator.ui.transcribe.TranscriptionState
+import com.talkbridge.livetranslator.data.stringResToLanguagecode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
@@ -28,13 +30,11 @@ import kotlin.time.ExperimentalTime
 private const val TAG: String = "TranscribeViewModel"
 
 class TranscribeViewModel(
-    application: Application,
+    private val talkBridgeClient: TalkBridgeClient,
     private val transcriptionItemsRepository: TranscriptionItemsRepository,
     private val userPreferencesRepository: UserPreferencesRepository
-): AndroidViewModel(application) {
-    private val context = getApplication<Application>()
+): ViewModel() {
 
-    private val talkBridgeClient = TalkBridgeClient(context)
     private val audioRecorder = AudioRecorder()
 
     private val _transcribeUiState = MutableStateFlow(TranscribeUiState())
@@ -45,8 +45,6 @@ class TranscribeViewModel(
 
     private var progressIncrements: Float = 0f
 
-    private lateinit var customIPAddress: String
-
     init {
         setupClientCallbacks()
         observePreferences()
@@ -55,8 +53,27 @@ class TranscribeViewModel(
 
     private fun observePreferences() {
         viewModelScope.launch {
-            userPreferencesRepository.costumIPAdress.collect {
-                customIPAddress = it
+            userPreferencesRepository.currentTranscribeLanguage
+                .combine(userPreferencesRepository.recentTranscribeLanguages) { selected, recent ->
+                    selected to recent
+                }
+                .collect { (selected, recent) ->
+
+                    val recentLanguages = recent.map { languagecode ->
+                        languagesMap.getValue(languagecodeToLanguageObject(languagecode))
+                    }
+
+                    _transcribeUiState.update { currentState ->
+                        currentState.copy(
+                            selectedLanguage = languagesMap.getValue(languagecodeToLanguageObject(selected)),
+                            recentLanguages = recentLanguages
+                        )
+                    }
+                }
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.customIPAddress.collect {
+                talkBridgeClient.updateIpAddress(it)
             }
         }
     }
@@ -155,18 +172,10 @@ class TranscribeViewModel(
         pendingChunks.clear()
         _waveAmplitudes.update { emptyList() }
         audioBuffer.clear()
-        if (customIPAddress == ""){
-            talkBridgeClient.sendAudioForTranscript(
-                audioData = finalAudio,
-                lang = if (transcribeUiState.value.autoDetectLanguage) "auto" else stringResToLanguagecode(transcribeUiState.value.selectedLanguage.languageName)
-            )
-        } else{
-            talkBridgeClient.sendAudioForTranscript(
-                ipAddress = customIPAddress,
-                audioData = finalAudio,
-                lang = if (transcribeUiState.value.autoDetectLanguage) "auto" else stringResToLanguagecode(transcribeUiState.value.selectedLanguage.languageName)
-            )
-        }
+        talkBridgeClient.sendAudioForTranscript(
+            audioData = finalAudio,
+            lang = if (transcribeUiState.value.autoDetectLanguage) "auto" else stringResToLanguagecode(transcribeUiState.value.selectedLanguage.languageName)
+        )
     }
 
     fun deleteRecording(){
@@ -239,9 +248,11 @@ class TranscribeViewModel(
     }
 
     fun updateSourceLanguage(language: LanguageData){
-        _transcribeUiState.update { currentState ->
-            currentState.copy(
-                selectedLanguage = language
+        viewModelScope.launch {
+            userPreferencesRepository.saveTranscribeLanguage(stringResToLanguagecode(language.languageName))
+            userPreferencesRepository.addRecentLanguage(
+                newLanguageCode = stringResToLanguagecode(language.languageName),
+                key = PreferenceKeys.RECENT_TRANSCRIBE_LANGUAGES
             )
         }
     }
@@ -309,28 +320,6 @@ class TranscribeViewModel(
             )
         }
     }
-
-    private val stringResToLang = mapOf(
-        R.string.dutch to "nl",
-        R.string.english to "en",
-        R.string.french to "fr",
-        R.string.german to "de",
-        R.string.italian to "it",
-        R.string.japanese to "ja",
-        R.string.korean to "ko",
-        R.string.polish to "pl",
-        R.string.portuguese to "pt",
-        R.string.russian to "ru",
-        R.string.spanish to "es",
-        R.string.swedish to "sv",
-        R.string.turkish to "tr",
-        R.string.ukrainian to "uk",
-        R.string.vietnamese to "vi",
-        R.string.chinese to "zh"
-    )
-
-    private fun stringResToLanguagecode(@StringRes stringRes: Int): String =
-        stringResToLang[stringRes] ?: "en"
 }
 
 data class TranscribeUiState(
@@ -340,7 +329,8 @@ data class TranscribeUiState(
     val selectedLanguage: LanguageData = LanguageData(R.string.german, R.drawable.germany_flag_circular),
     val transcriptionProgress: Float = 0f,
     val timeLeft: Int = 0,
-    val createdItemId: Long = 0L
+    val createdItemId: Long = 0L,
+    val recentLanguages: List<LanguageData>? = null
 )
 
 enum class TranscriptionState {
