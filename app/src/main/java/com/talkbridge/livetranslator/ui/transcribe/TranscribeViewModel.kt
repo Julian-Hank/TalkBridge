@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
+import com.talkbridge.livetranslator.data.ClientEvent
 import com.talkbridge.livetranslator.data.LanguageData
 import com.talkbridge.livetranslator.data.LanguageDataSource.languagesMap
 import com.talkbridge.livetranslator.data.TalkBridgeClient
@@ -46,8 +47,8 @@ class TranscribeViewModel(
     private var progressIncrements: Float = 0f
 
     init {
-        setupClientCallbacks()
         observePreferences()
+        observeClientEvents()
     }
 
 
@@ -71,17 +72,19 @@ class TranscribeViewModel(
                     }
                 }
         }
-        viewModelScope.launch {
-            userPreferencesRepository.customIPAddress.collect {
-                talkBridgeClient.updateIpAddress(it)
-            }
-        }
     }
 
-    private fun setupClientCallbacks() {
-        talkBridgeClient.onTranscriptionResponse = { response -> handleTranscriptionResponse(response) }
-        talkBridgeClient.onEstimatedTimeResult = { time -> handleEstimatedTimeResult(time) }
-        talkBridgeClient.onTranscriptionError = { handleServerError() }
+    private fun observeClientEvents() {
+        viewModelScope.launch {
+            talkBridgeClient.events.collect { event ->
+                when (event) {
+                    is ClientEvent.TranscriptionResult -> handleTranscriptionResponse(event.text)
+                    is ClientEvent.EstimatedTime       -> handleEstimatedTimeResult(event.seconds)
+                    is ClientEvent.TranscriptionError  -> handleServerError()
+                    else -> {}
+                }
+            }
+        }
     }
 
     private fun handleServerError(){
@@ -122,7 +125,7 @@ class TranscribeViewModel(
         }
     }
 
-    fun handleEstimatedTimeResult(time: Int){
+    private fun handleEstimatedTimeResult(time: Int){
         Log.d(TAG, "Geschätzte Zeit: ${time}s")
         _transcribeUiState.update { uiState ->
             uiState.copy(
@@ -139,14 +142,13 @@ class TranscribeViewModel(
     }
 
     @OptIn(ExperimentalTime::class)
-    fun setTimeLeft(timeLeft: Int){
+    private fun setTimeLeft(timeLeft: Int){
         _transcribeUiState.update { uiState ->
             uiState.copy(
                 timeLeft = timeLeft
             )
         }
         progressIncrements = 1f / timeLeft
-        Log.d(TAG, progressIncrements.toString())
     }
 
 

@@ -58,6 +58,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.talkbridge.livetranslator.R
 import com.talkbridge.livetranslator.TalkBridgeBottomNavBar
@@ -364,7 +365,7 @@ fun LanguageSwapCard(
                     language = sourceLanguage.languageName,
                     flagRes = sourceLanguage.flag,
                     onClick = { onSourceLanguageClick() },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -428,7 +429,8 @@ fun LanguageItem(
             Text(
                 text = stringResource(language),
                 color = primary,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                fontSize = 14.sp
             )
         }
     }

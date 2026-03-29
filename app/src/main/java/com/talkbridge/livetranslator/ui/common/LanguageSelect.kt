@@ -1,12 +1,8 @@
 package com.talkbridge.livetranslator.ui.common
 
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,7 +53,8 @@ object LanguageSelectDestination : NavigationDestination {
     override val route = "language_select"
     override val titleRes = R.string.language_select
     const val languageTypeArg = "languageType"
-    val routeWithArgs = "$route/{$languageTypeArg}"
+    const val callerRouteArg = "callerRoute"
+    val routeWithArgs = "$route/{$languageTypeArg}/{$callerRouteArg}"
 }
 
 
@@ -139,7 +136,6 @@ fun LanguageSelectBody(
 
             // Zuletzt verwendet
             if (recentLanguages != null && !recentLanguages.isEmpty()){
-//                Log.d("langSelect", recentLanguages.toString())
                 item {
                     Text(
                         text = stringResource(R.string.recently_used),
@@ -282,15 +278,6 @@ fun LanguageCard(
         }
     }
 }
-
-
-//@Preview
-//@Composable
-//private fun LanguageSearchBarPreview() {
-//    TalkBridgeLiveTheme {
-//        LanguageSearchBar()
-//    }
-//}
 
 @Preview
 @Composable

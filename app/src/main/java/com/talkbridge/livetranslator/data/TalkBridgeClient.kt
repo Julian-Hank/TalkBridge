@@ -4,6 +4,9 @@ import android.content.Context
 import android.media.AudioManager
 import android.util.Log
 import com.talkbridge.livetranslator.data.audio.AudioOutputManager
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
@@ -23,10 +26,25 @@ import java.util.concurrent.TimeUnit
 private const val TAG: String = "TalkBridgeClient"
 private const val DEFAULT_IP = "192.168.68.60"
 
+sealed class ClientEvent {
+    object Connected : ClientEvent()
+    object Ready : ClientEvent()
+    data class LiveTranslationResult(val text: String) : ClientEvent()
+    data class TranslationResult(val text: String) : ClientEvent()
+    data class TranscriptionResult(val text: String) : ClientEvent()
+    data class EstimatedTime(val seconds: Int) : ClientEvent()
+    data class LiveTranslationError(val message: String) : ClientEvent()
+    object TranscriptionError : ClientEvent()
+    object TranslationError : ClientEvent()
+}
+
 class TalkBridgeClient(
     private val context: Context,
 ) {
     var serverIpAddress: String = DEFAULT_IP
+        private set
+
+    var useBetterTranslation: Boolean = false
         private set
 
     private var webSocket: WebSocket? = null
@@ -37,21 +55,15 @@ class TalkBridgeClient(
 
     private val audioOutputManager: AudioOutputManager = AudioOutputManager(context)
 
-    var onReady: (() -> Unit)? = null
-    var onError: ((String) -> Unit)? = null
-    var onConnected :(() -> Unit)? = null
-
-    var onTranscriptionResponse: ((String) -> Unit)? = null
-    var onTranscriptionError: (() -> Unit)? = null
-    var onEstimatedTimeResult: ((Int) -> Unit)? = null
-
-    var onLiveTranslationResponse: ((String) -> Unit)? = null
-
-    var onTranslationResponse: ((String) -> Unit)? = null
-    var onTranslationError: (() -> Unit)? = null
+    private val _events = MutableSharedFlow<ClientEvent>(extraBufferCapacity = 9)
+    val events: SharedFlow<ClientEvent> = _events.asSharedFlow()
 
     fun updateIpAddress(ip: String) {
         serverIpAddress = ip.ifBlank { DEFAULT_IP }
+    }
+
+    fun setUseBetterTranslation(value: Boolean){
+        useBetterTranslation = value
     }
 
     fun connectWebsocket(
@@ -73,6 +85,7 @@ class TalkBridgeClient(
                 val initData = JSONObject().apply {
                     put("source_lang", sourceLang)
                     put("target_lang", targetLang)
+                    put("use_better_translation", useBetterTranslation)
                 }
                 webSocket.send(initData.toString())
             }
@@ -93,13 +106,13 @@ class TalkBridgeClient(
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 Log.d(TAG, "WebSocket error: ${t.message}")
-                onError?.invoke(t.message ?: "Unknown error")
+                _events.tryEmit(ClientEvent.LiveTranslationError(t.message ?: "Unknown error"))
             }
         })
     }
 
     fun sendAudio(audioData: ByteArray){
-        if (isAudioOutputBluetooth(context)){
+        if (isAudioOutputBluetooth()){
             webSocket?.send(audioData.toByteString())
         } else {
             if (System.currentTimeMillis() > audioOutputManager.audioFinishTime){
@@ -108,7 +121,7 @@ class TalkBridgeClient(
         }
     }
 
-    fun isAudioOutputBluetooth(context: Context): Boolean {
+    private fun isAudioOutputBluetooth(): Boolean {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         return audioManager.isBluetoothA2dpOn
     }
@@ -120,18 +133,18 @@ class TalkBridgeClient(
 
             when (type) {
                 "connected" -> {
-                    onConnected?.invoke()
+                    _events.tryEmit(ClientEvent.Connected)
                 }
                 "ready" -> {
-                    onReady?.invoke()
+                    _events.tryEmit(ClientEvent.Ready)
                 }
                 "partial" -> {
                     val text = json.getString("text")
-                    onLiveTranslationResponse?.invoke(text)
+                    _events.tryEmit(ClientEvent.LiveTranslationResult(json.getString("text")))
                 }
                 "final" -> {
                     val text = json.getString("text")
-                    onLiveTranslationResponse?.invoke(text)
+                    _events.tryEmit(ClientEvent.LiveTranslationResult(json.getString("text")))
                 }
             }
         } catch (e: Exception) {
@@ -177,11 +190,11 @@ class TalkBridgeClient(
                             when (json.getString("type")) {
                                 "estimated_time" -> {
                                     val seconds = json.getInt("seconds")
-                                    onEstimatedTimeResult?.invoke(seconds)
+                                    _events.tryEmit(ClientEvent.EstimatedTime(json.getInt("seconds")))
                                 }
                                 "transcript" -> {
                                     val text = json.getString("text")
-                                    onTranscriptionResponse?.invoke(text)
+                                    _events.tryEmit(ClientEvent.TranscriptionResult(json.getString("text")))
                                 }
                             }
                         }
@@ -192,7 +205,7 @@ class TalkBridgeClient(
 
             override fun onFailure(call: Call, e: IOException) {
                 Log.d(TAG, "Error: ${e.message}")
-                onTranscriptionError?.invoke()
+                _events.tryEmit(ClientEvent.TranscriptionError)
             }
         })
     }
@@ -222,12 +235,12 @@ class TalkBridgeClient(
             override fun onResponse(call: Call, response: Response) {
                 val body = response.body?.string() ?: return
                 val translated = JSONObject(body).getString("translated")
-                onTranslationResponse?.invoke(translated)
+                _events.tryEmit(ClientEvent.TranslationResult(translated))
             }
 
             override fun onFailure(call: Call, e: IOException) {
                 Log.d(TAG, "Translation error: ${e.message}")
-                onTranslationError?.invoke()
+                _events.tryEmit(ClientEvent.TranslationError)
             }
         })
     }

@@ -6,6 +6,7 @@ import com.talkbridge.livetranslator.data.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -25,10 +26,14 @@ class SettingsViewModel(
     private fun setAllPreferences() {
         viewModelScope.launch {
             userPreferencesRepository.customIPAddress
-                .collect {
+                .combine(userPreferencesRepository.useBetterTranslation){ customIP, useBetterTranslation ->
+                    customIP to useBetterTranslation
+                }
+                .collect { (customIp, useBetterTranslation) ->
                     _settingsUiState.update { uiState ->
                         uiState.copy(
-                            customIP = it
+                            customIP = customIp,
+                            useBetterTranslation = useBetterTranslation
                         )
                     }
                 }
@@ -45,8 +50,21 @@ class SettingsViewModel(
             userPreferencesRepository.saveCustomIP(ip)
         }
     }
+
+    fun toggleUseBetterTranslation(){
+        val useBetterTranslation = !settingsUiState.value.useBetterTranslation
+        _settingsUiState.update { uiState ->
+            uiState.copy(
+                useBetterTranslation = useBetterTranslation
+            )
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.setUseBetterTranslation(useBetterTranslation)
+        }
+    }
 }
 
 data class SettingsUiState(
-    val customIP: String = ""
+    val customIP: String = "",
+    val useBetterTranslation: Boolean = false
 )

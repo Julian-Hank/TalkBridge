@@ -1,9 +1,9 @@
 package com.talkbridge.livetranslator.ui.home
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
+import com.talkbridge.livetranslator.data.ClientEvent
 import com.talkbridge.livetranslator.data.LanguageData
 import com.talkbridge.livetranslator.data.LanguageDataSource.languagesMap
 import com.talkbridge.livetranslator.data.TalkBridgeClient
@@ -33,7 +33,7 @@ class HomeViewModel(
 
     init {
         observePreferences()
-        setupClientCallbacks()
+        observeClientEvents()
     }
 
     private fun observePreferences() {
@@ -60,21 +60,19 @@ class HomeViewModel(
                     }
                 }
         }
-        viewModelScope.launch {
-            userPreferencesRepository.customIPAddress.collect {
-                talkBridgeClient.updateIpAddress(it)
-            }
-        }
     }
 
-    private fun setupClientCallbacks() {
-        talkBridgeClient.onReady = { handleServerReady() }
-        talkBridgeClient.onConnected = { handleServerConnected() }
-        talkBridgeClient.onError = { error -> handleError(error) }
-        talkBridgeClient.onLiveTranslationResponse = {
-            text -> setCurrentText(text)
-            Log.d(TAG, text)
-            Log.d(TAG, "TEST")
+    private fun observeClientEvents() {
+        viewModelScope.launch {
+            talkBridgeClient.events.collect { event ->
+                when (event) {
+                    is ClientEvent.Connected            -> handleServerConnected()
+                    is ClientEvent.Ready                -> handleServerReady()
+                    is ClientEvent.LiveTranslationResult -> setCurrentText(event.text)
+                    is ClientEvent.LiveTranslationError  -> handleError(event.message)
+                    else -> { }
+                }
+            }
         }
     }
 
@@ -171,6 +169,8 @@ class HomeViewModel(
         } else{
             viewModelScope.launch {
                 userPreferencesRepository.saveCurrentLanguages(
+                    sourceLanguageKey = PreferenceKeys.CURRENT_LIVE_SOURCE_LANGUAGE,
+                    targetLanguageKey = PreferenceKeys.CURRENT_LIVE_TARGET_LANGUAGE,
                     sourceLanguageCode = stringResToLanguagecode(language.languageName),
                     targetLanguageCode = stringResToLanguagecode(targetLanguage.languageName)
                 )
@@ -190,6 +190,8 @@ class HomeViewModel(
         } else {
             viewModelScope.launch {
                 userPreferencesRepository.saveCurrentLanguages(
+                    sourceLanguageKey = PreferenceKeys.CURRENT_LIVE_SOURCE_LANGUAGE,
+                    targetLanguageKey = PreferenceKeys.CURRENT_LIVE_TARGET_LANGUAGE,
                     sourceLanguageCode = stringResToLanguagecode(sourceLanguage.languageName),
                     targetLanguageCode = stringResToLanguagecode(language.languageName)
                 )
@@ -207,6 +209,8 @@ class HomeViewModel(
 
         viewModelScope.launch {
             userPreferencesRepository.saveCurrentLanguages(
+                sourceLanguageKey = PreferenceKeys.CURRENT_LIVE_SOURCE_LANGUAGE,
+                targetLanguageKey = PreferenceKeys.CURRENT_LIVE_TARGET_LANGUAGE,
                 sourceLanguageCode = stringResToLanguagecode(targetLanguage.languageName),
                 targetLanguageCode = stringResToLanguagecode(sourceLanguage.languageName)
             )

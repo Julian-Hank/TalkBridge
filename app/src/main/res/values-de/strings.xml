@@ -19,7 +19,7 @@
     <string name="switch_languages">Sprachen tauschen</string>
 
     <!-- Status / Hints -->
-    <string name="listening">Empfangsbereit...</string>
+    <string name="listening">Empfangsbereit…</string>
     <string name="press_microphone_to_speak">Mikrofon drücken, um zu sprechen</string>
 
     <!-- Screens / Sections -->

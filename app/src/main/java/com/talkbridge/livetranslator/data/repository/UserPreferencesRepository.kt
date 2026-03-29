@@ -2,6 +2,7 @@ package com.talkbridge.livetranslator.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -144,6 +145,19 @@ class UserPreferencesRepository(
                     ?: emptyList()
             }
 
+    val useBetterTranslation: Flow<Boolean> =
+        dataStore.data
+            .catch {
+                if (it is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw it
+                }
+            }
+            .map { preferences ->
+                preferences[PreferenceKeys.USE_BETTER_TRANSLATION] ?: false
+            }
+
     suspend fun saveCustomIP(
         ip: String
     ) {
@@ -152,13 +166,23 @@ class UserPreferencesRepository(
         }
     }
 
+    suspend fun setUseBetterTranslation(
+        value: Boolean
+    ){
+        dataStore.edit { preferences ->
+            preferences[PreferenceKeys.USE_BETTER_TRANSLATION] = value
+        }
+    }
+
     suspend fun saveCurrentLanguages(
+        sourceLanguageKey: Preferences.Key<String>,
+        targetLanguageKey: Preferences.Key<String>,
         sourceLanguageCode: String,
         targetLanguageCode: String
     ) {
         dataStore.edit { preferences ->
-            preferences[PreferenceKeys.CURRENT_LIVE_SOURCE_LANGUAGE] = sourceLanguageCode
-            preferences[PreferenceKeys.CURRENT_LIVE_TARGET_LANGUAGE] = targetLanguageCode
+            preferences[sourceLanguageKey] = sourceLanguageCode
+            preferences[targetLanguageKey] = targetLanguageCode
         }
     }
 
@@ -206,4 +230,6 @@ object PreferenceKeys {
     val RECENT_TRANSCRIBE_LANGUAGES = stringPreferencesKey("recent_transcribe_languages")
 
     val CUSTOM_IP_ADDRESS = stringPreferencesKey("custom_ip_address")
+
+    val USE_BETTER_TRANSLATION = booleanPreferencesKey("use_better_translation")
 }

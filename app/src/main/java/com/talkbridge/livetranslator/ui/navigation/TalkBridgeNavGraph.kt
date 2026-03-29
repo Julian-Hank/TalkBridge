@@ -69,10 +69,10 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                     }
                 },
                 onSourceLanguageClick = {
-                    navController.navigate("${LanguageSelectDestination.route}/source")
+                    navController.navigate("${LanguageSelectDestination.route}/source/${HomeDestination.route}")
                 },
                 onTargetLanguageClick = {
-                    navController.navigate("${LanguageSelectDestination.route}/target")
+                    navController.navigate("${LanguageSelectDestination.route}/target/${HomeDestination.route}")
                 },
                 onLanguageSwapClick = { viewModel.swapLanguages() },
                 onStartButtonClick = { viewModel.connectWithServer() },
@@ -83,26 +83,28 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
         composable(
             route = LanguageSelectDestination.routeWithArgs,
             arguments = listOf(
-                navArgument(LanguageSelectDestination.languageTypeArg) {
-                    type = NavType.StringType
-                }
+                navArgument(LanguageSelectDestination.languageTypeArg) { type = NavType.StringType },
+                navArgument(LanguageSelectDestination.callerRouteArg) { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val languageType = backStackEntry.arguments?.getString(
                 LanguageSelectDestination.languageTypeArg
             ) ?: "source"
+            val callerRoute = backStackEntry.arguments?.getString(
+                LanguageSelectDestination.callerRouteArg
+            ) ?: HomeDestination.route
 
-            val previousRoute = navController.previousBackStackEntry?.destination?.route
-            
-            when (previousRoute) {
+            when (callerRoute) {
                 HomeDestination.route -> {
+                    val homeBackStackEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(HomeDestination.route)
+                    }
                     val homeViewModel: HomeViewModel = viewModel(
-                        viewModelStoreOwner = navController.previousBackStackEntry!!,
+                        viewModelStoreOwner = homeBackStackEntry,
                         factory = AppViewModelProvider.Factory
                     )
-                    val recentLanguages = remember {
-                        homeViewModel.homeUiState.value.recentLanguages
-                    }
+                    val recentLanguages = homeViewModel.homeUiState.collectAsState().value.recentLanguages
+
                     LanguageSelectScreen(
                         languageType = languageType,
                         onBackButtonClick = { navController.navigateUp() },
@@ -119,10 +121,15 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                 }
 
                 TranslateDestination.route -> {
+                    val translateBackStackEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(TranslateDestination.route)
+                    }
                     val translateViewModel: TranslateViewModel = viewModel(
-                        viewModelStoreOwner = navController.previousBackStackEntry!!,
+                        viewModelStoreOwner = translateBackStackEntry,
                         factory = AppViewModelProvider.Factory
                     )
+                    val recentLanguages = translateViewModel.translateUiState.collectAsState().value.recentLanguages
+
                     LanguageSelectScreen(
                         languageType = languageType,
                         onBackButtonClick = { navController.navigateUp() },
@@ -133,18 +140,21 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                                 translateViewModel.updateTargetLanguage(language)
                             }
                             navController.navigateUp()
-                        }
+                        },
+                        recentLanguages = recentLanguages
                     )
                 }
 
                 TranscribeDestination.route -> {
+                    val transcribeBackStackEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(TranscribeDestination.route)
+                    }
                     val transcribeViewModel: TranscribeViewModel = viewModel(
-                        viewModelStoreOwner = navController.previousBackStackEntry!!,
+                        viewModelStoreOwner = transcribeBackStackEntry,
                         factory = AppViewModelProvider.Factory
                     )
-                    val recentLanguages = remember {
-                        transcribeViewModel.transcribeUiState.value.recentLanguages
-                    }
+                    val recentLanguages = transcribeViewModel.transcribeUiState.collectAsState().value.recentLanguages
+
                     LanguageSelectScreen(
                         languageType = languageType,
                         onBackButtonClick = { navController.navigateUp() },
@@ -180,10 +190,10 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                     navController.navigate(SettingsDestination.route)
                 },
                 onSourceLanguageClick = {
-                    navController.navigate("${LanguageSelectDestination.route}/source")
+                    navController.navigate("${LanguageSelectDestination.route}/source/${TranslateDestination.route}")
                 },
                 onTargetLanguageClick = {
-                    navController.navigate("${LanguageSelectDestination.route}/target")
+                    navController.navigate("${LanguageSelectDestination.route}/target/${TranslateDestination.route}")
                 },
                 onInputChanged = { viewModel.setSourceLanguageText(it) },
                 onLanguageSwapClick = { viewModel.swapLanguages() },
@@ -215,7 +225,7 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                     viewModel.setAutoDetectLanguage(autoDetect)
                 },
                 onLanguageItemClick = {
-                    navController.navigate("${LanguageSelectDestination.route}/source")
+                    navController.navigate("${LanguageSelectDestination.route}/source/${TranscribeDestination.route}")
                 },
                 onStartClick = { viewModel.startRecording() },
                 onStopClick = { viewModel.stopRecording() },
