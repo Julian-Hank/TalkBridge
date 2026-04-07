@@ -53,7 +53,7 @@ class AudioOutputManager(private val context: Context) {
                 setDataSource(tempFile.absolutePath)
                 prepare()
                 start()
-                audioFinishTime = System.currentTimeMillis() + duration - 35
+                audioFinishTime = System.currentTimeMillis() + duration - 25
                 setOnCompletionListener {
                     it.release()
                     tempFile.delete()

@@ -67,6 +67,15 @@ fun LanguageSelectScreen(
     onLanguageSelected: (LanguageData) -> Unit,
     recentLanguages: List<LanguageData>? = null,
 ){
+    var isNavigatingAway by remember { mutableStateOf(false) }
+
+    val safeOnLanguageSelected: (LanguageData) -> Unit = { language ->
+        if (!isNavigatingAway) {
+            isNavigatingAway = true
+            onLanguageSelected(language)
+        }
+    }
+
     Scaffold(
         topBar = {
             TalkBridgeTopAppBar(
@@ -81,7 +90,7 @@ fun LanguageSelectScreen(
                 .fillMaxWidth()
                 .padding(innerPadding)
                 .padding(horizontal = 24.dp),
-            onLanguageSelected = onLanguageSelected,
+            onLanguageSelected = safeOnLanguageSelected,
             recentLanguages = recentLanguages
         )
     }

@@ -15,6 +15,7 @@ import com.talkbridge.livetranslator.data.repository.PreferenceKeys
 import com.talkbridge.livetranslator.data.repository.TranscriptionItemsRepository
 import com.talkbridge.livetranslator.data.repository.UserPreferencesRepository
 import com.talkbridge.livetranslator.data.stringResToLanguagecode
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -163,21 +164,26 @@ class TranscribeViewModel(
         }
     }
 
-    fun sendRecording(){
-        val finalAudio = if (audioBuffer.isNotEmpty()) audioBuffer.reduce { acc, bytes -> acc + bytes } else return
-        _transcribeUiState.update { currentState  ->
-            currentState.copy(
-                transcriptionState = TranscriptionState.CONNECTING
-            )
-        }
+    fun sendRecording() {
+        if (audioBuffer.isEmpty()) return
+
+        val bufferSnapshot = audioBuffer.toList()
+        audioBuffer.clear()
+
+        _transcribeUiState.update { it.copy(transcriptionState = TranscriptionState.CONNECTING) }
         recordingStartedTime = 0L
         pendingChunks.clear()
         _waveAmplitudes.update { emptyList() }
-        audioBuffer.clear()
-        talkBridgeClient.sendAudioForTranscript(
-            audioData = finalAudio,
-            lang = if (transcribeUiState.value.autoDetectLanguage) "auto" else stringResToLanguagecode(transcribeUiState.value.selectedLanguage.languageName)
-        )
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val finalAudio = bufferSnapshot.reduce { acc, bytes -> acc + bytes }
+
+            talkBridgeClient.sendAudioForTranscript(
+                audioData = finalAudio,
+                lang = if (transcribeUiState.value.autoDetectLanguage) "auto"
+                else stringResToLanguagecode(transcribeUiState.value.selectedLanguage.languageName)
+            )
+        }
     }
 
     fun deleteRecording(){

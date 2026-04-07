@@ -53,11 +53,6 @@ class SettingsViewModel(
 
     fun toggleUseBetterTranslation(){
         val useBetterTranslation = !settingsUiState.value.useBetterTranslation
-        _settingsUiState.update { uiState ->
-            uiState.copy(
-                useBetterTranslation = useBetterTranslation
-            )
-        }
         viewModelScope.launch {
             userPreferencesRepository.setUseBetterTranslation(useBetterTranslation)
         }
@@ -66,5 +61,5 @@ class SettingsViewModel(
 
 data class SettingsUiState(
     val customIP: String = "",
-    val useBetterTranslation: Boolean = false
+    val useBetterTranslation: Boolean = true
 )

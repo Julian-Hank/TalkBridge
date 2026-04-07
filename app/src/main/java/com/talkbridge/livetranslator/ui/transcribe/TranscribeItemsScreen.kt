@@ -48,7 +48,7 @@ import com.talkbridge.livetranslator.ui.theme.tertiary
 
 object TranscribeItemsOverviewDestination : NavigationDestination {
     override val route = "transcribeItemsOverview"
-    override val titleRes = R.string.transcriptions
+    override val titleRes = R.string.my_transcriptions
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,6 +91,7 @@ fun TranscribeItemsBody(
     LazyColumn (modifier = modifier) {
         if (uiState.transcriptionItemsList.isEmpty()){
             item{
+                Spacer(modifier = Modifier.height(28.dp))
                 Text(text = stringResource(R.string.no_transcriptions))
             }
         } else {

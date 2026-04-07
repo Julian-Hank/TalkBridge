@@ -72,7 +72,7 @@ fun SettingsBody(
     ) {
         item {
             SettingsHeading(
-                text = "General",
+                text = stringResource(R.string.general),
             )
 //            Spacer(modifier = Modifier.height(16.dp))
         }
@@ -81,7 +81,7 @@ fun SettingsBody(
                 TextField(
                     value = uiState.customIP,
                     onValueChange = { viewModel.setCustomIP(it) },
-                    label = { Text("Custom IP") },
+                    label = { Text(stringResource(R.string.custom_ip)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -97,7 +97,7 @@ fun SettingsBody(
             SettingsItem {
                 Row {
                     Text(
-                        text = "Higher Quality Translations if possible (increases Latency)",
+                        text = stringResource(R.string.better_translations),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.weight(7f),
                         fontSize = 14.sp
@@ -125,7 +125,7 @@ fun SettingsItem(modifier: Modifier = Modifier, content: @Composable () -> Unit)
 }
 
 @Composable
-fun SettingsHeading(text: String, modifier: Modifier = Modifier) { //later stringRes
+fun SettingsHeading(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         textAlign = TextAlign.Center,

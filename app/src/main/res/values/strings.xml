@@ -58,7 +58,7 @@
     <string name="open_settings">Open Settings</string>
     <string name="cancel">Cancel</string>
     <string name="waiting_for_connection">Waiting for connection…</string>
-    <string name="connection_established">Connection established\nStarting Model...</string>
+    <string name="connection_established">Connection established\nStarting Model…</string>
     <string name="connection_failed">Connection failed</string>
     <string name="try_again">Try again</string>
     <string name="recently_used">Recently used</string>
@@ -80,4 +80,8 @@
     <string name="translation">Translation</string>
     <string name="copied">Copied</string>
     <string name="copy">Copy</string>
+    <string name="general">General</string>
+    <string name="custom_ip">Custom IP address</string>
+    <string name="better_translations">Higher Quality Translations (increases Latency) *Recommended</string>
+    <string name="my_transcriptions">My transcriptions</string>
 </resources>

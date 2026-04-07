@@ -1,5 +1,6 @@
 package com.talkbridge.livetranslator.ui.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
@@ -68,7 +69,7 @@ class HomeViewModel(
                 when (event) {
                     is ClientEvent.Connected            -> handleServerConnected()
                     is ClientEvent.Ready                -> handleServerReady()
-                    is ClientEvent.LiveTranslationResult -> setCurrentText(event.text)
+                    is ClientEvent.LiveTranslationResult -> addNewTextResult(event.text)
                     is ClientEvent.LiveTranslationError  -> handleError(event.message)
                     else -> { }
                 }
@@ -128,37 +129,57 @@ class HomeViewModel(
 
     fun stopRecording() {
         talkBridgeClient.disconnect()
-        _homeUiState.update { currentState ->
-            currentState.copy(
-                connectionState = ConnectionState.NOT_CONNECTED
-            )
-        }
         audioRecorder.stopRecording()
-        resetCurrentText()
+        resetConnectionState()
+    }
+
+    fun pauseRecording(){
+        when (homeUiState.value.connectionState) {
+            ConnectionState.PAUSED -> {
+                startRecording()
+                _homeUiState.update { uiState ->
+                    uiState.copy(
+                        connectionState = ConnectionState.READY
+                    )
+                }
+            }
+            ConnectionState.READY -> {
+                audioRecorder.stopRecording()
+                _homeUiState.update { uiState ->
+                    uiState.copy(
+                        connectionState = ConnectionState.PAUSED
+                    )
+                }
+            }
+            else -> {
+                Log.w(TAG, "Nothing to Pause")
+            }
+        }
     }
 
     fun resetConnectionState(){
         _homeUiState.update { currentState ->
             currentState.copy(
-                connectionState = ConnectionState.NOT_CONNECTED
+                connectionState = ConnectionState.NOT_CONNECTED,
+                textResults = null
             )
         }
     }
 
-    fun setCurrentText(text: String){
-        _homeUiState.update { currentState ->
-            currentState.copy(
-                currentText = text
-            )
-        }
-    }
+    fun addNewTextResult(text: String) {
+        val current = homeUiState.value.textResults?.toMutableList() ?: mutableListOf()
+        val lastEntry = current.lastOrNull()
 
-    fun resetCurrentText(){
-        _homeUiState.update { currentState ->
-            currentState.copy(
-                currentText = null
-            )
+        when {
+            lastEntry?.translated == null && lastEntry != null -> {
+                current[current.lastIndex] = lastEntry.copy(translated = text)
+            }
+            else -> {
+                current.add(TranslationEntry(original = text))
+            }
         }
+        Log.d(TAG, current.toString())
+        _homeUiState.update { it.copy(textResults = current) }
     }
 
     fun updateSourceLanguage(language: LanguageData){
@@ -222,7 +243,8 @@ data class HomeUiState(
     val connectionState: ConnectionState = ConnectionState.NOT_CONNECTED,
     val sourceLanguage: LanguageData = LanguageData(R.string.english, R.drawable.uk_flag_circular),
     val targetLanguage: LanguageData = LanguageData(R.string.german, R.drawable.germany_flag_circular),
-    val currentText: String? = null,
+//    val currentText: String? = null,
+    val textResults: MutableList<TranslationEntry>? = null, //  z.b [["Hallo", "Hello"],["Wie geht es dir?", "How are you?"]]
     val recentLanguages: List<LanguageData>? = null
 )
 
@@ -231,5 +253,11 @@ enum class ConnectionState {
     CONNECTING,
     CONNECTED,
     READY,
+    PAUSED,
     FAILED
 }
+
+data class TranslationEntry(
+    val original: String,
+    val translated: String? = null  // null = noch ausstehend
+)

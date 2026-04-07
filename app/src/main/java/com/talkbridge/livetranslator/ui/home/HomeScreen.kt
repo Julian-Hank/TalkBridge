@@ -24,8 +24,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -37,7 +41,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -49,7 +52,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -93,31 +95,34 @@ fun HomeScreen(
     onTargetLanguageClick: () -> Unit = {},
     onSourceLanguageClick: () -> Unit = {},
     onStartButtonClick: () -> Unit = {},
-    onStopButtonClick: () -> Unit = {},
+    onPauseButtonClick: () -> Unit = {},
     onLanguageSwapClick: () -> Unit = {},
     onBackButtonClick: () -> Unit = {},
     uiState: HomeUiState,
 ) {
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-
-    val canNavigateBack = uiState.connectionState == ConnectionState.FAILED
+    val canNavigateBack = uiState.connectionState !=
+            ConnectionState.NOT_CONNECTED
+            && uiState.connectionState != ConnectionState.CONNECTING
+            && uiState.connectionState != ConnectionState.CONNECTED
 
     Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier,
         topBar = {
             TalkBridgeTopAppBar(
-                title = null,
+                title = if (!canNavigateBack) null else stringResource(R.string.live_translate),
                 canNavigateBack = canNavigateBack,
                 navigateUp = onBackButtonClick,
                 openSettings = openSettings
             )
         },
         bottomBar = {
-            TalkBridgeBottomNavBar(
-                onNavigationButtonClick = onNavigationButtonClick,
-                currentRoute = HomeDestination.route
-            )
+            if (!canNavigateBack)  {
+                TalkBridgeBottomNavBar(
+                    onNavigationButtonClick = onNavigationButtonClick,
+                    currentRoute = HomeDestination.route
+                )
+            }
         }
     ) { innerPadding ->
         HomeBody(
@@ -125,8 +130,8 @@ fun HomeScreen(
             onLanguageSwapClick = onLanguageSwapClick ,
             onSourceLanguageClick = onSourceLanguageClick,
             onTargetLanguageClick = onTargetLanguageClick,
-            onStartButtonClick = onStartButtonClick,
-            onStopButtonClick = onStopButtonClick,
+            onPauseButtonClick = onStartButtonClick,
+            onStopButtonClick = onPauseButtonClick,
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -141,7 +146,7 @@ fun HomeBody(
     onLanguageSwapClick: () -> Unit,
     onTargetLanguageClick: () -> Unit,
     onSourceLanguageClick: () -> Unit,
-    onStartButtonClick: () -> Unit,
+    onPauseButtonClick: () -> Unit,
     onStopButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -152,7 +157,7 @@ fun HomeBody(
                 onSwapClick = onLanguageSwapClick,
                 onSourceLanguageClick = onSourceLanguageClick,
                 onTargetLanguageClick = onTargetLanguageClick,
-                onStartButtonClick = onStartButtonClick,
+                onStartButtonClick = onPauseButtonClick,
                 modifier = modifier
             )
         }
@@ -171,13 +176,22 @@ fun HomeBody(
         ConnectionState.READY -> {
             ActiveHomeBody(
                 uiState = uiState,
-                onStopButtonClick = onStopButtonClick,
-                modifier = modifier
+                onPauseButtonClick = onStopButtonClick,
+                modifier = modifier,
+                isPaused = false
+            )
+        }
+        ConnectionState.PAUSED -> {
+            ActiveHomeBody(
+                uiState = uiState,
+                onPauseButtonClick = onStopButtonClick,
+                modifier = modifier,
+                isPaused = true
             )
         }
         ConnectionState.FAILED -> {
             ConnectionFailureBody(
-                onRetryButtonClick = onStartButtonClick,
+                onRetryButtonClick = onPauseButtonClick,
                 modifier = modifier
             )
         }
@@ -237,7 +251,8 @@ fun ConnectionFailureBody(
 @Composable
 fun ActiveHomeBody(
     uiState: HomeUiState,
-    onStopButtonClick: () -> Unit,
+    onPauseButtonClick: () -> Unit,
+    isPaused: Boolean,
     modifier: Modifier = Modifier
 ) {
     val view = LocalView.current
@@ -252,13 +267,14 @@ fun ActiveHomeBody(
 
     Column(modifier = modifier) {
         Spacer(modifier = Modifier.weight(.5f))
-        TextResultContainer(
-            text = uiState.currentText,
-            modifier =  Modifier.weight(5f)
+        TextResultsWrapper(
+            uiState = uiState,
+            modifier =  Modifier.weight(6f)
         )
         Spacer(modifier = Modifier.weight(.5f))
-        StopButton(
-            onClick = onStopButtonClick,
+        PauseButton(
+            onClick = onPauseButtonClick,
+            isPaused = isPaused,
             modifier = Modifier.weight(2f)
         )
     }
@@ -307,30 +323,69 @@ fun InactiveHomeBody(
     }
 }
 
-
+@Composable
+fun TextResultsWrapper(
+    uiState: HomeUiState,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(modifier
+        .padding(bottom = 8.dp)
+    ) {
+        if (uiState.textResults != null){
+            items(items = uiState.textResults.toList().reversed()){ translationEntry ->
+                TextResultContainer(
+                    originalText = translationEntry.original,
+                    translatedText = translationEntry.translated
+                )
+            }
+        } else {
+            item{
+                TextResultContainer(
+                    originalText = stringResource(R.string.listening)
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun TextResultContainer(
-    text: String? = null,
+    originalText: String,
+    translatedText: String? = null,
+    isCurrent: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier
+            .padding(vertical = 6.dp),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = if (isCurrent) Color.White else Color(0xFFe0dfdf) //fix hardcoded
         )
     ) {
-        Text(
-            text = text ?: stringResource(R.string.listening),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            textAlign = TextAlign.Start,
-            color = primary,
-            style = MaterialTheme.typography.displayMedium
-        )
+        Column {
+            Text(
+                text = originalText,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp),
+                textAlign = TextAlign.Start,
+                color = Color.Gray,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Text(
+                text = translatedText ?: "...",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(bottom = 4.dp),
+                textAlign = TextAlign.Start,
+                color = primary,
+                style = MaterialTheme.typography.displayMedium
+            )
+        }
     }
 }
 
@@ -564,8 +619,9 @@ fun StartButton(
 }
 
 @Composable
-fun StopButton(
+fun PauseButton(
     onClick: () -> Unit = {},
+    isPaused: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -575,32 +631,37 @@ fun StopButton(
     ) {
         Box(
             modifier = Modifier
-                .size(68.dp)
+                .size(60.dp)
                 .background(
-                    color = stopColor,
+                    color = if (isPaused) secondary else stopColor,
                     shape = CircleShape
                 )
                 .clickable { onClick() },
             contentAlignment = Alignment.Center
         ) {
-            // Stop-Icon (Quadrat)
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(
-                        color = Color.White,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-            )
-
+            // Icon
+            if (isPaused){
+                Icon(
+                    imageVector = Icons.Filled.PlayArrow,
+                    tint = Color.White,
+                    contentDescription = stringResource(R.string.resume)
+                )
+            } else {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_pause_24),
+                    tint = Color.White,
+                    contentDescription = stringResource(R.string.pause),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
-        Text(
-            text = stringResource(R.string.stop_live_translate),
-            textAlign = TextAlign.Center,
-            color = stopColor,
-            style = MaterialTheme.typography.displayMedium,
-            modifier = Modifier.padding(top = 8.dp)
-        )
+//        Text(
+//            text = stringResource(R.string.stop_live_translate),
+//            textAlign = TextAlign.Center,
+//            color = stopColor,
+//            style = MaterialTheme.typography.displayMedium,
+//            modifier = Modifier.padding(top = 8.dp)
+//        )
     }
 }
 

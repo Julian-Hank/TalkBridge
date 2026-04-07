@@ -40,6 +40,18 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
     NavHost(
         navController = navController,
         startDestination = HomeDestination.route,
+//        enterTransition = {
+////            scaleIn(initialScale = 0.9f) + fadeIn()
+//        },
+//        exitTransition = {
+//            scaleOut(targetScale = 0.9f) + fadeOut()
+//        },
+//        popEnterTransition = {
+//            scaleIn(initialScale = 0.9f) + fadeIn()
+//        },
+//        popExitTransition = {
+//            scaleOut(targetScale = 0.9f) + fadeOut()
+//        },
         modifier = modifier
     ) {
         composable(route = HomeDestination.route) {
@@ -76,8 +88,8 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                 },
                 onLanguageSwapClick = { viewModel.swapLanguages() },
                 onStartButtonClick = { viewModel.connectWithServer() },
-                onStopButtonClick = { viewModel.stopRecording() },
-                onBackButtonClick = { viewModel.resetConnectionState() }
+                onPauseButtonClick = { viewModel.pauseRecording() },
+                onBackButtonClick = { viewModel.stopRecording() }
             )
         }
         composable(
@@ -116,7 +128,7 @@ fun TalkBridgeNavHost(navController: NavHostController, modifier: Modifier = Mod
                             }
                             navController.navigateUp()
                         },
-                        recentLanguages = recentLanguages //homeViewModel.homeUiState.collectAsState().value.recentLanguages
+                        recentLanguages = recentLanguages
                     )
                 }
 

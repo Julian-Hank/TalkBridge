@@ -79,4 +79,8 @@
     <string name="translation">Translation</string>
     <string name="copied">Copied</string>
     <string name="copy">Copy</string>
+    <string name="general">General</string>
+    <string name="custom_ip">Custom IP address</string>
+    <string name="better_translations">Higher Quality Translations (increases Latency) *Recommended</string>
+    <string name="my_transcriptions">My transcriptions</string>
 </resources>

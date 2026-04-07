@@ -44,7 +44,7 @@ class TalkBridgeClient(
     var serverIpAddress: String = DEFAULT_IP
         private set
 
-    var useBetterTranslation: Boolean = false
+    var useBetterTranslation: Boolean = true
         private set
 
     private var webSocket: WebSocket? = null
@@ -64,6 +64,7 @@ class TalkBridgeClient(
 
     fun setUseBetterTranslation(value: Boolean){
         useBetterTranslation = value
+        Log.d(TAG, useBetterTranslation.toString())
     }
 
     fun connectWebsocket(
@@ -77,6 +78,7 @@ class TalkBridgeClient(
             .build()
 
         Log.d(TAG,"trying to connect")
+        Log.d(TAG, useBetterTranslation.toString())
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
@@ -143,6 +145,10 @@ class TalkBridgeClient(
                     _events.tryEmit(ClientEvent.LiveTranslationResult(json.getString("text")))
                 }
                 "final" -> {
+                    val text = json.getString("text")
+                    _events.tryEmit(ClientEvent.LiveTranslationResult(json.getString("text")))
+                }
+                "translated" -> {
                     val text = json.getString("text")
                     _events.tryEmit(ClientEvent.LiveTranslationResult(json.getString("text")))
                 }

@@ -14,6 +14,7 @@ import java.io.IOException
 class UserPreferencesRepository(
     private val dataStore: DataStore<Preferences>
 ) {
+
     private companion object {
         const val TAG = "UserPreferencesRepo"
     }
@@ -155,9 +156,8 @@ class UserPreferencesRepository(
                 }
             }
             .map { preferences ->
-                preferences[PreferenceKeys.USE_BETTER_TRANSLATION] ?: false
+                preferences[PreferenceKeys.USE_BETTER_TRANSLATION] ?: true
             }
-
     suspend fun saveCustomIP(
         ip: String
     ) {

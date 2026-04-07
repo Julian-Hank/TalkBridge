@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.talkbridge.livetranslator.ui.facetoface.FaceToFaceDestination
 import com.talkbridge.livetranslator.ui.home.HomeDestination
 import com.talkbridge.livetranslator.ui.navigation.NavigationDestinationWithIcon
 import com.talkbridge.livetranslator.ui.navigation.TalkBridgeNavHost
@@ -120,9 +119,9 @@ fun TalkBridgeBottomNavBar(
     modifier: Modifier = Modifier
 ) {
     val items = listOf(
-        FaceToFaceDestination,
-        TranslateDestination,
+//        FaceToFaceDestination,
         TranscribeDestination,
+        TranslateDestination,
         HomeDestination
     )
 
