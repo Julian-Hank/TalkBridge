@@ -29,11 +29,15 @@ class SettingsViewModel(
                 .combine(userPreferencesRepository.useBetterTranslation){ customIP, useBetterTranslation ->
                     customIP to useBetterTranslation
                 }
-                .collect { (customIp, useBetterTranslation) ->
+                .combine(userPreferencesRepository.stopOnAppClose) { pair, stopOnAppClose ->
+                    Triple(pair.first, pair.second, stopOnAppClose)
+                }
+                .collect { (customIp, useBetterTranslation, stopOnAppClose) ->
                     _settingsUiState.update { uiState ->
                         uiState.copy(
                             customIP = customIp,
-                            useBetterTranslation = useBetterTranslation
+                            useBetterTranslation = useBetterTranslation,
+                            stopOnAppClose = stopOnAppClose
                         )
                     }
                 }
@@ -57,9 +61,17 @@ class SettingsViewModel(
             userPreferencesRepository.setUseBetterTranslation(useBetterTranslation)
         }
     }
+
+    fun toggleStopOnAppClose(){
+        val stopOnAppClose = !settingsUiState.value.stopOnAppClose
+        viewModelScope.launch {
+            userPreferencesRepository.setStopOnAppClose(stopOnAppClose)
+        }
+    }
 }
 
 data class SettingsUiState(
     val customIP: String = "",
-    val useBetterTranslation: Boolean = true
+    val useBetterTranslation: Boolean = true,
+    val stopOnAppClose: Boolean = false
 )

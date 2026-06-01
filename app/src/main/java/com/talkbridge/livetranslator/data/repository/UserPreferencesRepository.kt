@@ -158,6 +158,20 @@ class UserPreferencesRepository(
             .map { preferences ->
                 preferences[PreferenceKeys.USE_BETTER_TRANSLATION] ?: true
             }
+
+    val stopOnAppClose: Flow<Boolean> =
+        dataStore.data
+            .catch {
+                if (it is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw it
+                }
+            }
+            .map { preferences ->
+                preferences[PreferenceKeys.STOP_ON_APP_CLOSE] ?: false
+            }
+
     suspend fun saveCustomIP(
         ip: String
     ) {
@@ -171,6 +185,14 @@ class UserPreferencesRepository(
     ){
         dataStore.edit { preferences ->
             preferences[PreferenceKeys.USE_BETTER_TRANSLATION] = value
+        }
+    }
+
+    suspend fun setStopOnAppClose(
+        value: Boolean
+    ){
+        dataStore.edit { preferences ->
+            preferences[PreferenceKeys.STOP_ON_APP_CLOSE] = value
         }
     }
 
@@ -232,4 +254,6 @@ object PreferenceKeys {
     val CUSTOM_IP_ADDRESS = stringPreferencesKey("custom_ip_address")
 
     val USE_BETTER_TRANSLATION = booleanPreferencesKey("use_better_translation")
+
+    val STOP_ON_APP_CLOSE = booleanPreferencesKey("stop_on_app_close")
 }

@@ -29,13 +29,17 @@ private const val DEFAULT_IP = "192.168.68.60"
 sealed class ClientEvent {
     object Connected : ClientEvent()
     object Ready : ClientEvent()
-    data class LiveTranslationResult(val text: String) : ClientEvent()
+    data class LiveTranslationResult(val text: String, val type: SERVER_RESPONSE) : ClientEvent()
     data class TranslationResult(val text: String) : ClientEvent()
     data class TranscriptionResult(val text: String) : ClientEvent()
     data class EstimatedTime(val seconds: Int) : ClientEvent()
     data class LiveTranslationError(val message: String) : ClientEvent()
     object TranscriptionError : ClientEvent()
     object TranslationError : ClientEvent()
+}
+
+enum class SERVER_RESPONSE {
+    PARTIAL, FINAL, TRANSLATED
 }
 
 class TalkBridgeClient(
@@ -123,6 +127,11 @@ class TalkBridgeClient(
         }
     }
 
+    fun resetSession() {
+        val msg = """{"type":"reset"}"""
+        webSocket?.send(msg)
+    }
+
     private fun isAudioOutputBluetooth(): Boolean {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         return audioManager.isBluetoothA2dpOn
@@ -142,15 +151,15 @@ class TalkBridgeClient(
                 }
                 "partial" -> {
                     val text = json.getString("text")
-                    _events.tryEmit(ClientEvent.LiveTranslationResult(json.getString("text")))
+                    _events.tryEmit(ClientEvent.LiveTranslationResult(text, SERVER_RESPONSE.PARTIAL))
                 }
                 "final" -> {
                     val text = json.getString("text")
-                    _events.tryEmit(ClientEvent.LiveTranslationResult(json.getString("text")))
+                    _events.tryEmit(ClientEvent.LiveTranslationResult(text, SERVER_RESPONSE.FINAL))
                 }
                 "translated" -> {
                     val text = json.getString("text")
-                    _events.tryEmit(ClientEvent.LiveTranslationResult(json.getString("text")))
+                    _events.tryEmit(ClientEvent.LiveTranslationResult(text, SERVER_RESPONSE.TRANSLATED))
                 }
             }
         } catch (e: Exception) {

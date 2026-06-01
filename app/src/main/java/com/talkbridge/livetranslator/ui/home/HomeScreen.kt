@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -500,26 +501,52 @@ fun StartButton(
 ) {
     val context = LocalContext.current
     var showPermissionDialog by remember { mutableStateOf(false) }
+    var pendingPermissionDialog by remember { mutableStateOf<String?>(null) }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
+    // Launcher für Microphone
+    val micPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             onClick()
         } else {
-            showPermissionDialog = true
+            pendingPermissionDialog = Manifest.permission.RECORD_AUDIO
         }
+    }
+
+    // Launcher für Notification → bei Erfolg Mic-Permission anfordern
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Notification OK → jetzt Mic prüfen
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED
+            ) {
+                onClick()
+            } else {
+                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        } else {
+            pendingPermissionDialog = Manifest.permission.POST_NOTIFICATIONS
+        }
+    }
+
+    // Zeige Dialog wenn eine Permission dauerhaft verweigert wurde
+    val dialogPermission = pendingPermissionDialog
+    if (dialogPermission != null) {
+        showPermissionDialog = true
+        pendingPermissionDialog = null
     }
 
     if (showPermissionDialog) {
         AlertDialog(
             onDismissRequest = { showPermissionDialog = false },
-            title = { Text( text=stringResource(R.string.permission_dialog_title)) },
-            text = { Text(text=stringResource(R.string.permission_dialog_description)) },
+            title = { Text(text = stringResource(R.string.permission_dialog_title)) },
+            text = { Text(text = stringResource(R.string.permission_dialog_description)) },
             confirmButton = {
                 TextButton(onClick = {
                     showPermissionDialog = false
-                    // Öffne App-Einstellungen
                     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                         data = Uri.fromParts("package", context.packageName, null)
                     }
@@ -576,13 +603,20 @@ fun StartButton(
                             shape = CircleShape
                         )
                         .clickable {
-                            if (ContextCompat.checkSelfPermission(
-                                    context, Manifest.permission.RECORD_AUDIO
-                                ) == PackageManager.PERMISSION_GRANTED
-                            ) {
-                                onClick()
-                            } else {
-                                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            when {
+                                // 1. Notification-Permission (nur Android 13+)
+                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                                        != PackageManager.PERMISSION_GRANTED -> {
+                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                                // 2. Microphone-Permission
+                                ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+                                        != PackageManager.PERMISSION_GRANTED -> {
+                                    micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                }
+                                // 3. Alles gewährt
+                                else -> onClick()
                             }
                         },
                     contentAlignment = Alignment.Center

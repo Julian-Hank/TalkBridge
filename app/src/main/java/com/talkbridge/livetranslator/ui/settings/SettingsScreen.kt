@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -74,7 +76,6 @@ fun SettingsBody(
             SettingsHeading(
                 text = stringResource(R.string.general),
             )
-//            Spacer(modifier = Modifier.height(16.dp))
         }
         item{
             SettingsItem{
@@ -84,6 +85,33 @@ fun SettingsBody(
                     label = { Text(stringResource(R.string.custom_ip)) },
                     modifier = Modifier.fillMaxWidth()
                 )
+            }
+        }
+        item {
+            Row() {
+                HorizontalDivider(
+                    thickness = 2.dp,
+                    modifier = Modifier.padding(horizontal = 36.dp, vertical = 12.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+        item {
+            SettingsItem {
+                Row {
+                    Text(
+                        text = "Stop on app close",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.weight(7f),
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Switch(
+                        checked = uiState.stopOnAppClose,
+                        onCheckedChange = { viewModel.toggleStopOnAppClose() },
+                        modifier = Modifier.weight(2.5f)
+                    )
+                }
             }
         }
 

@@ -3,6 +3,7 @@ package com.talkbridge.livetranslator.data.audio
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.media.audiofx.AcousticEchoCanceler
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,7 +14,7 @@ class AudioRecorder(
     private var audioRecord: AudioRecord? = null
     private var isRecording = false
 
-    private val sampleRate = 16000 // 16kHz (gut für Speech-to-Text)
+    private val sampleRate = 16000 // 16kHz
     private val channelConfig = AudioFormat.CHANNEL_IN_MONO
     private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
 
@@ -35,16 +36,18 @@ class AudioRecorder(
                 bufferSize
             )
 
+            if (AcousticEchoCanceler.isAvailable()) {
+                AcousticEchoCanceler.create(audioRecord!!.audioSessionId)?.enabled = true
+            }
+
             audioRecord?.startRecording()
             isRecording = true
-
 
             val buffer = ByteArray(bufferSize)
 
             while (isRecording) {
                 val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                 if (read > 0) {
-                    // Audio-Daten an Backend senden
                     onAudioData(buffer.copyOf(read))
                 }
             }

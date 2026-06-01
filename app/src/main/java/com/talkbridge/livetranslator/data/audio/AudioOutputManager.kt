@@ -14,7 +14,6 @@ class AudioOutputManager(private val context: Context) {
 
     var audioFinishTime: Long = 0L
 
-    // Für kurze System-Sounds (Start/Stop/Error)
     private var soundPool: SoundPool? = null
     private var startSoundId: Int = -1
     private var stopSoundId: Int = -1
@@ -53,7 +52,7 @@ class AudioOutputManager(private val context: Context) {
                 setDataSource(tempFile.absolutePath)
                 prepare()
                 start()
-                audioFinishTime = System.currentTimeMillis() + duration - 25
+                audioFinishTime = System.currentTimeMillis() + duration + 280
                 setOnCompletionListener {
                     it.release()
                     tempFile.delete()

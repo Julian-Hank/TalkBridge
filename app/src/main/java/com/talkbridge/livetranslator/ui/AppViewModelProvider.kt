@@ -18,6 +18,7 @@ object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
             HomeViewModel(
+                application = talkBridgeApplication(),
                 userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository,
                 talkBridgeClient = talkBridgeApplication().container.talkBridgeClient
             )
