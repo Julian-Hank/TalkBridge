@@ -185,20 +185,10 @@ The UI shows a progress bar animating over the estimated time, then saves the re
 
 ## Supported Languages
 
-Dutch, English, French, German, Italian, Japanese, Korean, Polish, Portuguese, Russian, Spanish, Swedish, Turkish, Ukrainian, Vietnamese, Chinese
+Dutch, English, French, German, Italian, Polish, Portuguese, Russian, Spanish, Swedish, Turkish, Ukrainian
 
 ---
 
-## Notes
-
-- **`AndroidViewModel`** is used (not plain `ViewModel`) on screens that need `Context` for audio recording or Bluetooth state.
-- **`StateFlow`** is used throughout instead of `LiveData` — all UI state is collected via `collectAsState()` in composables.
-- **Language selection** is shared between Home, Translate, and Transcribe via a single `LanguageSelectScreen`. The correct parent ViewModel is resolved by inspecting the previous back-stack entry's route in `TalkBridgeNavGraph`.
-- **Waveform**: RMS is calculated from raw PCM 16-bit samples using `ByteBuffer` with little-endian byte order, normalized and amplified (×6) before display. One bar is emitted per 4 audio chunks.
-- **`fallbackToDestructiveMigration(true)`** is set on the Room database — schema changes will wipe local data during development.
-- **Face to Face** screen exists in the navigation graph and bottom bar, but its body composable is currently empty.
-
----
 
 ## License
 
