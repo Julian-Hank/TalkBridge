@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_logo">Логотип приложения TalkBridge</string>
+    <string name="app_name_on_homescreen">Live Translator</string>
+
+    <string name="back_button">Назад</string>
+    <string name="settings">Настройки</string>
+
+    <string name="transcribe">Транскрибировать</string>
+    <string name="translate">Перевести</string>
+    <string name="live_translate">Живой перевод</string>
+
+    <string name="start_live_translate">Начать живой\nперевод</string>
+    <string name="stop_live_translate">Остановить живой\nперевод</string>
+    <string name="start_recording">Начать\nзапись</string>
+    <string name="delete_recording">Удалить\nзапись</string>
+    <string name="switch_languages">Переключить языки</string>
+
+    <string name="listening">Прослушивание…</string>
+    <string name="press_microphone_to_speak">Нажмите на микрофон, чтобы говорить</string>
+
+    <string name="transcription">Транскрипция</string>
+    <string name="choose_language">Выберите язык</string>
+    <string name="language_select">Выбор языка</string>
+
+    <string name="german">Немецкий</string>
+    <string name="english">Английский</string>
+    <string name="russian">Русский</string>
+    <string name="polish">Польский</string>
+    <string name="french">Французский</string>
+    <string name="chinese">Китайский</string>
+    <string name="ukrainian">Украинский</string>
+    <string name="spanish">Испанский</string>
+    <string name="portuguese">Португальский</string>
+    <string name="turkish">Турецкий</string>
+    <string name="italian">Итальянский</string>
+    <string name="japanese">Японский</string>
+    <string name="swedish">Шведский</string>
+    <string name="korean">Корейский</string>
+    <string name="dutch">Нидерландский</string>
+    <string name="vietnamese">Вьетнамский</string>
+
+    <string name="stop_recording">Остановить\nзапись</string>
+    <string name="search_language">Поиск языка</string>
+    <string name="delete">Удалить</string>
+    <string name="source_language">Исходный язык</string>
+    <string name="target_language">Целевой язык</string>
+    <string name="all_languages">Все языки</string>
+
+    <string name="permission_dialog_title">Требуется разрешение</string>
+    <string name="permission_dialog_description">Для живого перевода требуется доступ к микрофону. Пожалуйста, включите его в настройках приложения.</string>
+    <string name="open_settings">Открыть настройки</string>
+    <string name="cancel">Отмена</string>
+    <string name="waiting_for_connection">Ожидание подключения…</string>
+    <string name="connection_established">Соединение установлено\nЗапуск модели…</string>
+    <string name="connection_failed">Ошибка подключения</string>
+    <string name="try_again">Повторить попытку</string>
+    <string name="recently_used">Недавно использованные</string>
+    <string name="conversation">Беседа</string>
+    <string name="connecting">Устанавливается соединение\nс сервером</string>
+    <string name="transcription_ready">Транскрипция готова</string>
+    <string name="recording_processed">Запись обрабатывается</string>
+    <string name="view_transcription">Посмотреть транскрипцию</string>
+    <string name="time_left">%d секунд</string>
+    <string name="pause">Пауза</string>
+    <string name="resume">Продолжить</string>
+    <string name="auto_detect">Автоопределение</string>
+    <string name="choose_lang">Выбрать язык</string>
+    <string name="transcriptions">Транскрипции</string>
+    <string name="no_transcriptions">Транскрипций пока нет</string>
+    <string name="delete_entry">Удалить запись</string>
+    <string name="sure_delete_entry">Вы уверены, что хотите удалить эту запись?</string>
+    <string name="enter_text">Введите текст</string>
+    <string name="translation">Перевод</string>
+    <string name="copied">Скопировано</string>
+    <string name="copy">Копировать</string>
+    <string name="general">Общие</string>
+    <string name="custom_ip">Пользовательский IP-адрес</string>
+    <string name="better_translations">Наилучшее качество перевода&lt;br&gt;&lt;i&gt;(увеличивает задержку) *Рекомендуется"&lt;/i&gt;</string>
+    <string name="background_processing">Фоновая обработка\nОбеспечивает бесперебойную работу задач, даже если приложение свернуто.</string>
+    <string name="my_transcriptions">Мои транскрипции</string>
+</resources>

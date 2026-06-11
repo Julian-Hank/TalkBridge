@@ -82,6 +82,7 @@
     <string name="copy">Copy</string>
     <string name="general">General</string>
     <string name="custom_ip">Custom IP address</string>
-    <string name="better_translations">Higher Quality Translations (increases Latency) *Recommended</string>
+    <string name="better_translations">Best translation quality&lt;br&gt;&lt;i&gt;(increases Latency) *Recommended"&lt;/i&gt;</string>
+    <string name="background_processing">Background Processing\nKeeps tasks running smoothly even if you minimize the app.</string>
     <string name="my_transcriptions">My transcriptions</string>
 </resources>

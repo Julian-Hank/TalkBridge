@@ -159,6 +159,19 @@ class UserPreferencesRepository(
                 preferences[PreferenceKeys.USE_BETTER_TRANSLATION] ?: true
             }
 
+//    val useBetterVAD: Flow<Boolean> =
+//        dataStore.data
+//            .catch {
+//                if (it is IOException) {
+//                    emit(emptyPreferences())
+//                } else {
+//                    throw it
+//                }
+//            }
+//            .map { preferences ->
+//                preferences[PreferenceKeys.USE_BETTER_VAD] ?: true
+//            }
+
     val stopOnAppClose: Flow<Boolean> =
         dataStore.data
             .catch {
@@ -187,6 +200,14 @@ class UserPreferencesRepository(
             preferences[PreferenceKeys.USE_BETTER_TRANSLATION] = value
         }
     }
+
+//    suspend fun setUseBetterVAD(
+//        value: Boolean
+//    ){
+//        dataStore.edit { preferences ->
+//            preferences[PreferenceKeys.USE_BETTER_VAD] = value
+//        }
+//    }
 
     suspend fun setStopOnAppClose(
         value: Boolean
@@ -254,6 +275,7 @@ object PreferenceKeys {
     val CUSTOM_IP_ADDRESS = stringPreferencesKey("custom_ip_address")
 
     val USE_BETTER_TRANSLATION = booleanPreferencesKey("use_better_translation")
+//    val USE_BETTER_VAD = booleanPreferencesKey("use_better_vad")
 
     val STOP_ON_APP_CLOSE = booleanPreferencesKey("stop_on_app_close")
 }

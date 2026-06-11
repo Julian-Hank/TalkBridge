@@ -28,21 +28,24 @@ class TalkBridgeForegroundService : Service() {
         const val NOTIFICATION_ID = 1
 
         const val ACTION_START_LIVE = "ACTION_START_LIVE"
+        const val ACTION_PAUSE_LIVE = "ACTION_PAUSE_LIVE"
+        const val ACTION_RESUME_LIVE = "ACTION_RESUME_LIVE"
+
         const val ACTION_START_TRANSCRIBE = "ACTION_START_TRANSCRIBE"
+        const val ACTION_PAUSE_TRANSCRIBE = "ACTION_PAUSE_TRANSCRIBE"
+        const val ACTION_RESUME_TRANSCRIBE = "ACTION_RESUME_TRANSCRIBE"
+
         const val ACTION_STOP = "ACTION_STOP"
 
         const val EXTRA_AUDIO_DATA = "extra_audio_data"
         const val EXTRA_TRANSCRIBE_LANG = "extra_transcribe_lang"
 
-        const val ACTION_PAUSE_LIVE = "ACTION_PAUSE"
-        const val ACTION_RESUME_LIVE = "ACTION_RESUME"
-
-        fun pauseIntent(context: Context) =
+        fun pauseLiveIntent(context: Context) =
             Intent(context, TalkBridgeForegroundService::class.java).apply {
                 action = ACTION_PAUSE_LIVE
             }
 
-        fun resumeIntent(context: Context) =
+        fun resumeLiveIntent(context: Context) =
             Intent(context, TalkBridgeForegroundService::class.java).apply {
                 action = ACTION_RESUME_LIVE
             }
@@ -52,11 +55,19 @@ class TalkBridgeForegroundService : Service() {
                 action = ACTION_START_LIVE
             }
 
-        fun startTranscribeIntent(context: Context, audioData: ByteArray, lang: String) =
+        fun startTranscribeIntent(context: Context) =
             Intent(context, TalkBridgeForegroundService::class.java).apply {
                 action = ACTION_START_TRANSCRIBE
-                putExtra(EXTRA_AUDIO_DATA, audioData)
-                putExtra(EXTRA_TRANSCRIBE_LANG, lang)
+            }
+
+        fun pauseTranscribeIntent(context: Context) =
+            Intent(context, TalkBridgeForegroundService::class.java).apply {
+                action = ACTION_PAUSE_TRANSCRIBE
+            }
+
+        fun resumeTranscribeIntent(context: Context) =
+            Intent(context, TalkBridgeForegroundService::class.java).apply {
+                action = ACTION_RESUME_TRANSCRIBE
             }
 
         fun stopIntent(context: Context) =
@@ -67,12 +78,14 @@ class TalkBridgeForegroundService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var client: TalkBridgeClient
+    private lateinit var container: AppContainer
     private val audioRecorder = AudioRecorder()
     private var currentMode: String? = null
 
     override fun onCreate() {
         super.onCreate()
-        client = (application as TalkBridgeApplication).container.talkBridgeClient
+        container = (application as TalkBridgeApplication).container
+        client = container.talkBridgeClient
         createNotificationChannel()
     }
 
@@ -97,12 +110,29 @@ class TalkBridgeForegroundService : Service() {
                 updateNotification("Live-Übersetzung pausiert")
             }
             ACTION_RESUME_LIVE -> {
-                serviceScope.launch {
-                    audioRecorder.startRecording { audioData ->
-                        client.sendAudio(audioData)
-                    }
-                }
+                startLiveTranslationRecording()
                 updateNotification("Live-Übersetzung läuft...")
+            }
+            ACTION_START_TRANSCRIBE -> {
+                currentMode = ACTION_START_TRANSCRIBE
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    startForeground(
+                        NOTIFICATION_ID,
+                        buildNotification("Transktiptionsaufnahme läuft..."),
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                    )
+                } else {
+                    startForeground(NOTIFICATION_ID, buildNotification("Transktiptionsaufnahme läuft..."))
+                }
+                startTranscription()
+            }
+            ACTION_PAUSE_TRANSCRIBE -> {
+                audioRecorder.stopRecording()
+                updateNotification("Transktiptionsaufnahme pausiert")
+            }
+            ACTION_RESUME_TRANSCRIBE -> {
+                startTranscription()
+                updateNotification("Transktiptionsaufnahme läuft...")
             }
 //            ACTION_START_TRANSCRIBE -> {
 //                val audio = intent.getByteArrayExtra(EXTRA_AUDIO_DATA) ?: return START_NOT_STICKY
@@ -111,7 +141,7 @@ class TalkBridgeForegroundService : Service() {
 //                startForeground(NOTIFICATION_ID, buildNotification("Transkription läuft..."))
 //                startTranscription(audio, lang)
 //            }
-//            ACTION_STOP -> stopSelf()
+            ACTION_STOP -> stopSelf()
         }
         return START_NOT_STICKY
     }
@@ -125,7 +155,11 @@ class TalkBridgeForegroundService : Service() {
     }
 
     private fun startTranscription(){
-
+        serviceScope.launch {
+            audioRecorder.startRecording { audioData ->
+                container.transcribeRecordingAudioFlow.tryEmit(audioData)
+            }
+        }
     }
 
     private fun sendTranscriptionAudio(audioData: ByteArray, lang: String) {
@@ -146,6 +180,11 @@ class TalkBridgeForegroundService : Service() {
         super.onDestroy()
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        stopSelf() // löst onDestroy aus -> disconnect -> Disconnected Event
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     // ── Notification ──────────────────────────────────────────────────
@@ -154,7 +193,7 @@ class TalkBridgeForegroundService : Service() {
         val channel = NotificationChannel(
             CHANNEL_ID,
             "TalkBridge",
-            NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = "Hintergrundübersetzung aktiv"
         }
@@ -172,41 +211,18 @@ class TalkBridgeForegroundService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setOngoing(true)
             .setContentTitle("TalkBridge")
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(openIntent)
-            .setOngoing(true)
             .build()
+            .also { it.flags = it.flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }
     }
 
     private fun updateNotification(contentText: String) {
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(NOTIFICATION_ID, buildNotification(contentText))
     }
-
-//    private fun buildNotification(contentText: String): Notification {
-//        val openIntent = PendingIntent.getActivity(
-//            this, 0,
-//            Intent(this, MainActivity::class.java).apply {
-//                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-//            },
-//            PendingIntent.FLAG_IMMUTABLE
-//        )
-//
-//        val stopIntent = PendingIntent.getService(
-//            this, 1,
-//            stopIntent(this),
-//            PendingIntent.FLAG_IMMUTABLE
-//        )
-//
-//        return NotificationCompat.Builder(this, CHANNEL_ID)
-//            .setContentTitle("TalkBridge")
-//            .setContentText(contentText)
-//            .setSmallIcon(R.drawable.ic_launcher_foreground)
-//            .setContentIntent(openIntent)
-//            .addAction(0, "Stoppen", stopIntent)
-//            .setOngoing(true)
-//            .build()
-//    }
 }

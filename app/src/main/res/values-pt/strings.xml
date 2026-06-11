@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_logo">Logótipo da aplicação TalkBridge</string>
+    <string name="app_name_on_homescreen">Live Translator</string>
+
+    <string name="back_button">Voltar</string>
+    <string name="settings">Definições</string>
+
+    <string name="transcribe">Transcrever</string>
+    <string name="translate">Traduzir</string>
+    <string name="live_translate">Tradução ao vivo</string>
+
+    <string name="start_live_translate">Iniciar tradução\nao vivo</string>
+    <string name="stop_live_translate">Parar tradução\nao vivo</string>
+    <string name="start_recording">Iniciar\ngravação</string>
+    <string name="delete_recording">Eliminar\ngravação</string>
+    <string name="switch_languages">Mudar de idioma</string>
+
+    <string name="listening">A ouvir…</string>
+    <string name="press_microphone_to_speak">Prima o microfone para falar</string>
+
+    <string name="transcription">Transcrição</string>
+    <string name="choose_language">Escolher idioma</string>
+    <string name="language_select">Seleção de idioma</string>
+
+    <string name="german">Alemão</string>
+    <string name="english">Inglês</string>
+    <string name="russian">Russo</string>
+    <string name="polish">Polaco</string>
+    <string name="french">Francês</string>
+    <string name="chinese">Chinês</string>
+    <string name="ukrainian">Ucraniano</string>
+    <string name="spanish">Espanhol</string>
+    <string name="portuguese">Português</string>
+    <string name="turkish">Turco</string>
+    <string name="italian">Italiano</string>
+    <string name="japanese">Japonês</string>
+    <string name="swedish">Sueco</string>
+    <string name="korean">Coreano</string>
+    <string name="dutch">Neerlandês</string>
+    <string name="vietnamese">Vietnamita</string>
+
+    <string name="stop_recording">Parar\ngravação</string>
+    <string name="search_language">Pesquisar idioma</string>
+    <string name="delete">Eliminar</string>
+    <string name="source_language">Idioma de origem</string>
+    <string name="target_language">Idioma de destino</string>
+    <string name="all_languages">Todos os idiomas</string>
+
+    <string name="permission_dialog_title">Permissão necessária</string>
+    <string name="permission_dialog_description">A permissão do microfone é necessária para traduções ao vivo. Ative-a nas definições da aplicação.</string>
+    <string name="open_settings">Abrir Definições</string>
+    <string name="cancel">Cancelar</string>
+    <string name="waiting_for_connection">A aguardar ligação…</string>
+    <string name="connection_established">Ligação estabelecida\nA iniciar modelo…</string>
+    <string name="connection_failed">Falha na ligação</string>
+    <string name="try_again">Tentar novamente</string>
+    <string name="recently_used">Utilizados recentemente</string>
+    <string name="conversation">Conversa</string>
+    <string name="connecting">A ligação ao servidor\nestá a ser estabelecida</string>
+    <string name="transcription_ready">Transcrição pronta</string>
+    <string name="recording_processed">A gravação está a ser processada</string>
+    <string name="view_transcription">Ver transcrição</string>
+    <string name="time_left">%d segundos</string>
+    <string name="pause">Pausa</string>
+    <string name="resume">Retomar</string>
+    <string name="auto_detect">Deteção automática</string>
+    <string name="choose_lang">Escolher idioma</string>
+    <string name="transcriptions">Transcrições</string>
+    <string name="no_transcriptions">Ainda sem transcrições</string>
+    <string name="delete_entry">Eliminar entrada</string>
+    <string name="sure_delete_entry">Tem a certeza de que pretende eliminar esta entrada?</string>
+    <string name="enter_text">Introduzir texto</string>
+    <string name="translation">Tradução</string>
+    <string name="copied">Copiado</string>
+    <string name="copy">Copiar</string>
+    <string name="general">Geral</string>
+    <string name="custom_ip">Endereço IP personalizado</string>
+    <string name="better_translations">Melhor qualidade de tradução&lt;br&gt;&lt;i&gt;(aumenta a latência) *Recomendado"&lt;/i&gt;</string>
+    <string name="background_processing">Processamento em segundo plano\nMantém as tarefas a funcionar sem problemas, mesmo que minimize a aplicação.</string>
+    <string name="my_transcriptions">As minhas transcrições</string>
+</resources>

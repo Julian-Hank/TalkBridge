@@ -32,6 +32,11 @@ class SettingsViewModel(
                 .combine(userPreferencesRepository.stopOnAppClose) { pair, stopOnAppClose ->
                     Triple(pair.first, pair.second, stopOnAppClose)
                 }
+//                .combine(userPreferencesRepository.useBetterVAD) { triple, useBetterVAD
+//                    Pair(triple, useBetterVAD)
+//                }
+//                .collect { (triple, useBetterVAD) ->
+//                    val (customIP, useBetterTranslation, stopOnAppClose) = triple
                 .collect { (customIp, useBetterTranslation, stopOnAppClose) ->
                     _settingsUiState.update { uiState ->
                         uiState.copy(
@@ -62,6 +67,13 @@ class SettingsViewModel(
         }
     }
 
+//    fun toggleUseBetterTranslation(){
+//        val useBetterVAD = !settingsUiState.value.useBetterVAD
+//        viewModelScope.launch {
+//            userPreferencesRepository.setUseBetterVAD(useBetterVAD)
+//        }
+//    }
+
     fun toggleStopOnAppClose(){
         val stopOnAppClose = !settingsUiState.value.stopOnAppClose
         viewModelScope.launch {
@@ -73,5 +85,6 @@ class SettingsViewModel(
 data class SettingsUiState(
     val customIP: String = "",
     val useBetterTranslation: Boolean = true,
-    val stopOnAppClose: Boolean = false
+    val stopOnAppClose: Boolean = false,
+//    val useBetterVAD: Boolean = true,
 )

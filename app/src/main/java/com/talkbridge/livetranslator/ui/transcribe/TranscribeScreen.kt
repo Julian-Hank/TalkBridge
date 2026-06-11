@@ -116,13 +116,15 @@ fun TranscribeScreen(
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TalkBridgeTopAppBar(
-                title = null,
-                canNavigateBack = false,
-                openSettings = openSettings,
-                actionIcon = R.drawable.outline_history_24,
-                onActionClick = openTranscriptionsOverview
-            )
+            if (uiState.transcriptionState == TranscriptionState.INACTIVE) {
+                TalkBridgeTopAppBar(
+                    title = null,
+                    canNavigateBack = false,
+                    openSettings = openSettings,
+                    actionIcon = R.drawable.outline_history_24,
+                    onActionClick = openTranscriptionsOverview
+                )
+            }
         },
         bottomBar = {
             TalkBridgeBottomNavBar(
@@ -179,36 +181,40 @@ fun TranscribeBody(
                 .weight(.575f)
                 .fillMaxWidth()
         )
-        if (uiState.transcriptionState == TranscriptionState.INACTIVE){
-            InactiveTranscribeBody(
-                autoDetectLanguage = uiState.autoDetectLanguage,
-                selectedLanguage = uiState.selectedLanguage,
-                onStartClick = onStartClick,
-                onLanguageItemClick = onLanguageItemClick,
-                onAutoDetectSwitchClick = onAutoDetectSwitchClick,
-                modifier = Modifier.weight(3f)
-            )
-        } else if (uiState.transcriptionState == TranscriptionState.CONNECTING || uiState.transcriptionState == TranscriptionState.TRANSCRIBING || uiState.transcriptionState == TranscriptionState.FINISHED){
-            FinishedTranscribeBody(
-                state = uiState.transcriptionState,
-                timeLeft = uiState.timeLeft,
-                progress = uiState.transcriptionProgress,
-                modifier = Modifier.weight(3f),
-                onViewTranscriptionClick = onViewTranscriptionClick,
-                createdItemId = uiState.createdItemId,
-            )
-        } else { // Recording / Paused / stopped
-            ActiveTranscribeBody(
-                state = uiState.transcriptionState,
-                elapsedTime = uiState.timeRecorded,
-                onStopClick = onStopClick,
-                onPauseClick = onPauseClick,
-                onResumeClick = onResumeClick,
-                onDeleteClick = onDeleteClick,
-                onFinishClick = onFinishClick,
-                amplitudes = waveAmplitudes,
-                modifier = Modifier.weight(3f)
-            )
+        when (uiState.transcriptionState) {
+            TranscriptionState.INACTIVE -> {
+                InactiveTranscribeBody(
+                    autoDetectLanguage = uiState.autoDetectLanguage,
+                    selectedLanguage = uiState.selectedLanguage,
+                    onStartClick = onStartClick,
+                    onLanguageItemClick = onLanguageItemClick,
+                    onAutoDetectSwitchClick = onAutoDetectSwitchClick,
+                    modifier = Modifier.weight(3f)
+                )
+            }
+            TranscriptionState.CONNECTING, TranscriptionState.TRANSCRIBING, TranscriptionState.FINISHED -> {
+                FinishedTranscribeBody(
+                    state = uiState.transcriptionState,
+                    timeLeft = uiState.timeLeft,
+                    progress = uiState.transcriptionProgress,
+                    modifier = Modifier.weight(3f),
+                    onViewTranscriptionClick = onViewTranscriptionClick,
+                    createdItemId = uiState.createdItemId,
+                )
+            }
+            else -> { // Recording / Paused / stopped
+                ActiveTranscribeBody(
+                    state = uiState.transcriptionState,
+                    elapsedTime = uiState.timeRecorded,
+                    onStopClick = onStopClick,
+                    onPauseClick = onPauseClick,
+                    onResumeClick = onResumeClick,
+                    onDeleteClick = onDeleteClick,
+                    onFinishClick = onFinishClick,
+                    amplitudes = waveAmplitudes,
+                    modifier = Modifier.weight(3f)
+                )
+            }
         }
     }
 }
@@ -225,6 +231,7 @@ fun FinishedTranscribeBody(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .padding(top = 48.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -325,6 +332,7 @@ fun ActiveTranscribeBody(
     }
     Column (
         modifier = modifier
+            .padding(top = 48.dp)
     ) {
         Row(
             verticalAlignment = Alignment.Top,

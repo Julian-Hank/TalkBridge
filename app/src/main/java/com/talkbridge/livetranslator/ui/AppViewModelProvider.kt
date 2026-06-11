@@ -25,6 +25,8 @@ object AppViewModelProvider {
         }
         initializer {
             TranscribeViewModel(
+                application = talkBridgeApplication(),
+                transcribeRecordingAudioFlow = talkBridgeApplication().container.transcribeRecordingAudioFlow,
                 transcriptionItemsRepository = talkBridgeApplication().container.transcriptionItemsRepository,
                 userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository,
                 talkBridgeClient = talkBridgeApplication().container.talkBridgeClient

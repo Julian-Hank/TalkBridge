@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_logo">TalkBridge Uygulama Logosu</string>
+    <string name="app_name_on_homescreen">Live Translator</string>
+
+    <string name="back_button">Geri</string>
+    <string name="settings">Ayarlar</string>
+
+    <string name="transcribe">Metne Dök</string>
+    <string name="translate">Çevir</string>
+    <string name="live_translate">Canlı Çeviri</string>
+
+    <string name="start_live_translate">Canlı Çeviriyi\nBaşlat</string>
+    <string name="stop_live_translate">Canlı Çeviriyi\nDurdur</string>
+    <string name="start_recording">Kaydı\nBaşlat</string>
+    <string name="delete_recording">Kaydı\nSil</string>
+    <string name="switch_languages">Dilleri değiştir</string>
+
+    <string name="listening">Dinleniyor…</string>
+    <string name="press_microphone_to_speak">Konuşmak için mikrofona basın</string>
+
+    <string name="transcription">Transkripsiyon</string>
+    <string name="choose_language">Dil Seçin</string>
+    <string name="language_select">Dil Seçimi</string>
+
+    <string name="german">Almanca</string>
+    <string name="english">İngilizce</string>
+    <string name="russian">Rusça</string>
+    <string name="polish">Polonca</string>
+    <string name="french">Fransızca</string>
+    <string name="chinese">Çince</string>
+    <string name="ukrainian">Ukraynaca</string>
+    <string name="spanish">İspanyolca</string>
+    <string name="portuguese">Portekizce</string>
+    <string name="turkish">Türkçe</string>
+    <string name="italian">İtalyanca</string>
+    <string name="japanese">Japonca</string>
+    <string name="swedish">İsveççe</string>
+    <string name="korean">Korece</string>
+    <string name="dutch">Felemenkçe</string>
+    <string name="vietnamese">Vietnamca</string>
+
+    <string name="stop_recording">Kaydı\nDurdur</string>
+    <string name="search_language">Dil ara</string>
+    <string name="delete">Sil</string>
+    <string name="source_language">Kaynak dil</string>
+    <string name="target_language">Hedef dil</string>
+    <string name="all_languages">Tüm diller</string>
+
+    <string name="permission_dialog_title">İzin gerekiyor</string>
+    <string name="permission_dialog_description">Canlı çeviriler için mikrofon izni gereklidir. Lütfen uygulama ayarlarından izni etkinleştirin.</string>
+    <string name="open_settings">Ayarları Aç</string>
+    <string name="cancel">İptal</string>
+    <string name="waiting_for_connection">Bağlantı bekleniyor…</string>
+    <string name="connection_established">Bağlantı kuruldu\nModel Başlatılıyor…</string>
+    <string name="connection_failed">Bağlantı başarısız</string>
+    <string name="try_again">Tekrar dene</string>
+    <string name="recently_used">Son kullanılanlar</string>
+    <string name="conversation">Sohbet</string>
+    <string name="connecting">Sunucu bağlantısı\nkuruluyor</string>
+    <string name="transcription_ready">Transkripsiyon hazır</string>
+    <string name="recording_processed">Kayıt işleniyor</string>
+    <string name="view_transcription">Transkripsiyonu görüntüle</string>
+    <string name="time_left">%d saniye</string>
+    <string name="pause">Duraklat</string>
+    <string name="resume">Devam et</string>
+    <string name="auto_detect">Otomatik algıla</string>
+    <string name="choose_lang">Dil seçin</string>
+    <string name="transcriptions">Transkripsiyonlar</string>
+    <string name="no_transcriptions">Henüz transkripsiyon yok</string>
+    <string name="delete_entry">Girdiyi sil</string>
+    <string name="sure_delete_entry">Bu girdiyi silmek istediğinizden emin misiniz?</string>
+    <string name="enter_text">Metin girin</string>
+    <string name="translation">Çeviri</string>
+    <string name="copied">Kopyalandı</string>
+    <string name="copy">Kopyala</string>
+    <string name="general">Genel</string>
+    <string name="custom_ip">Özel IP adresi</string>
+    <string name="better_translations">En iyi çeviri kalitesi&lt;br&gt;&lt;i&gt;(Gecikmeyi artırır) *Önerilen"&lt;/i&gt;</string>
+    <string name="background_processing">Arka Plan İşleme\nUygulamayı simge durumuna küçültseniz bile görevlerin sorunsuz çalışmasını sağlar.</string>
+    <string name="my_transcriptions">Transkripsiyonlarım</string>
+</resources>

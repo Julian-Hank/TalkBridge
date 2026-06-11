@@ -22,11 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talkbridge.livetranslator.R
 import com.talkbridge.livetranslator.TalkBridgeTopAppBar
+import com.talkbridge.livetranslator.ui.common.htmlStringResource
 import com.talkbridge.livetranslator.ui.navigation.NavigationDestination
+import com.talkbridge.livetranslator.ui.theme.TalkBridgeLiveTheme
 import com.talkbridge.livetranslator.ui.theme.primary
 
 object SettingsDestination : NavigationDestination {
@@ -69,6 +72,23 @@ fun SettingsBody(
     uiState: SettingsUiState,
     modifier: Modifier = Modifier
 ) {
+    SettingsBody(
+        uiState = uiState,
+        onCustomIPChange = { viewModel.setCustomIP(it) },
+        onStopOnAppCloseToggle = { viewModel.toggleStopOnAppClose() },
+        onUseBetterTranslationToggle = { viewModel.toggleUseBetterTranslation() },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun SettingsBody(
+    uiState: SettingsUiState,
+    onCustomIPChange: (String) -> Unit,
+    onStopOnAppCloseToggle: () -> Unit,
+    onUseBetterTranslationToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     LazyColumn (
         modifier = modifier
     ) {
@@ -81,7 +101,7 @@ fun SettingsBody(
             SettingsItem{
                 TextField(
                     value = uiState.customIP,
-                    onValueChange = { viewModel.setCustomIP(it) },
+                    onValueChange = onCustomIPChange,
                     label = { Text(stringResource(R.string.custom_ip)) },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -100,15 +120,15 @@ fun SettingsBody(
             SettingsItem {
                 Row {
                     Text(
-                        text = "Stop on app close",
+                        text = "Background Processing\nKeeps tasks running smoothly even if you minimize the app.",
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.weight(7f),
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Switch(
-                        checked = uiState.stopOnAppClose,
-                        onCheckedChange = { viewModel.toggleStopOnAppClose() },
+                        checked = !uiState.stopOnAppClose, //durch namensänderung der setting ( stop on app close -> Background Processing) ist es verneint
+                        onCheckedChange = { onStopOnAppCloseToggle() },
                         modifier = Modifier.weight(2.5f)
                     )
                 }
@@ -125,7 +145,7 @@ fun SettingsBody(
             SettingsItem {
                 Row {
                     Text(
-                        text = stringResource(R.string.better_translations),
+                        text = htmlStringResource(R.string.better_translations),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.weight(7f),
                         fontSize = 14.sp
@@ -133,12 +153,81 @@ fun SettingsBody(
                     Spacer(modifier = Modifier.weight(1f))
                     Switch(
                         checked = uiState.useBetterTranslation,
-                        onCheckedChange = { viewModel.toggleUseBetterTranslation() },
+                        onCheckedChange = { onUseBetterTranslationToggle() },
                         modifier = Modifier.weight(2.5f)
                     )
                 }
             }
         }
+        item {
+            Row() {
+                HorizontalDivider(
+                    thickness = 2.dp,
+                    modifier = Modifier.padding(horizontal = 36.dp, vertical = 12.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+//        item {
+//            SettingsItem {
+//                Row {
+//                    Text(
+//                        text = "Better Voice-Activity-Detection",
+//                        style = MaterialTheme.typography.bodySmall,
+//                        modifier = Modifier.weight(7f),
+//                        fontSize = 14.sp
+//                    )
+//                    Spacer(modifier = Modifier.weight(1f))
+//                    Switch(
+////                        checked = uiState.useBetterVAD,
+////                        onCheckedChange = { onUseBetterVADToggle() },
+//                        checked = true,
+//                        onCheckedChange = {  },
+//                        modifier = Modifier.weight(2.5f)
+//                    )
+//                }
+//            }
+//        }
+//        item {
+//            val options = listOf("higher but slower", "faster but lower")
+//            var selectedOption by remember { mutableStateOf(options[0]) }
+//            SettingsItem {
+//                Column {
+//                    Text(
+//                        text = "Translation quality",
+//                        style = MaterialTheme.typography.bodySmall,
+////                        modifier = Modifier.weight(7f),
+//                        fontSize = 16.sp
+//                    )
+////                    Spacer(modifier = Modifier.weight(1f))
+//                    Row {
+//                        options.forEach { option ->
+//                            Row(
+//                                verticalAlignment = Alignment.CenterVertically,
+//                                modifier = Modifier
+////                                    .fillMaxWidth()
+//                                    .selectable(
+//                                        selected = (option == selectedOption),
+//                                        onClick = { selectedOption = option },
+//                                        role = Role.RadioButton
+//                                    )
+//                                    .padding(8.dp)
+//                            ) {
+//                                RadioButton(
+//                                    selected = (option == selectedOption),
+//                                    onClick = null
+//                                )
+//                                Text(
+//                                    text = option,
+//                                    fontSize = 14.sp,
+//                                    modifier = Modifier.padding(start = 8.dp)
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
     }
 }
 
@@ -162,5 +251,22 @@ fun SettingsHeading(text: String, modifier: Modifier = Modifier) {
         modifier = modifier
             .padding(top = 16.dp, start = 12.dp)
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SettingsBodyPreview() {
+    TalkBridgeLiveTheme {
+        SettingsBody(
+            uiState = SettingsUiState(
+                customIP = "192.168.1.1",
+                useBetterTranslation = true,
+                stopOnAppClose = false
+            ),
+            onCustomIPChange = {},
+            onStopOnAppCloseToggle = {},
+            onUseBetterTranslationToggle = {}
+        )
+    }
 }
 

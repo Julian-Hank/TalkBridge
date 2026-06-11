@@ -1,13 +1,15 @@
 package com.talkbridge.livetranslator.ui.transcribe
 
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.talkbridge.livetranslator.R
 import com.talkbridge.livetranslator.data.ClientEvent
 import com.talkbridge.livetranslator.data.LanguageData
 import com.talkbridge.livetranslator.data.LanguageDataSource.languagesMap
 import com.talkbridge.livetranslator.data.TalkBridgeClient
+import com.talkbridge.livetranslator.data.TalkBridgeForegroundService
 import com.talkbridge.livetranslator.data.audio.AudioRecorder
 import com.talkbridge.livetranslator.data.languagecodeToLanguageObject
 import com.talkbridge.livetranslator.data.local.entity.TranscriptionItem
@@ -16,7 +18,9 @@ import com.talkbridge.livetranslator.data.repository.TranscriptionItemsRepositor
 import com.talkbridge.livetranslator.data.repository.UserPreferencesRepository
 import com.talkbridge.livetranslator.data.stringResToLanguagecode
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,26 +36,34 @@ import kotlin.time.ExperimentalTime
 private const val TAG: String = "TranscribeViewModel"
 
 class TranscribeViewModel(
+    application: Application,
+    private val transcribeRecordingAudioFlow: MutableSharedFlow<ByteArray>,
     private val talkBridgeClient: TalkBridgeClient,
     private val transcriptionItemsRepository: TranscriptionItemsRepository,
     private val userPreferencesRepository: UserPreferencesRepository
-): ViewModel() {
+): AndroidViewModel(application) {
 
+    private val context = getApplication<Application>()
     private val audioRecorder = AudioRecorder()
 
     private val _transcribeUiState = MutableStateFlow(TranscribeUiState())
     val transcribeUiState: StateFlow<TranscribeUiState> = _transcribeUiState.asStateFlow()
 
+    private var stopOnAppClose = false
+
     private val audioBuffer = mutableListOf<ByteArray>()
     private var recordingStartedTime: Long = 0L
+    private var timePaused: Int = 0
+    private var pauseStarted: Long = 0L
 
     private var progressIncrements: Float = 0f
+
+    private var recordingJob: Job? = null
 
     init {
         observePreferences()
         observeClientEvents()
     }
-
 
     private fun observePreferences() {
         viewModelScope.launch {
@@ -59,7 +71,12 @@ class TranscribeViewModel(
                 .combine(userPreferencesRepository.recentTranscribeLanguages) { selected, recent ->
                     selected to recent
                 }
-                .collect { (selected, recent) ->
+                .combine(userPreferencesRepository.stopOnAppClose) { pair, stopOnClose ->
+                    Triple(pair.first, pair.second, stopOnClose)
+                }
+                .collect { (selected, recent, stopOnClose) ->
+
+                    stopOnAppClose = stopOnClose
 
                     val recentLanguages = recent.map { languagecode ->
                         languagesMap.getValue(languagecodeToLanguageObject(languagecode))
@@ -124,6 +141,7 @@ class TranscribeViewModel(
                 createdItemId = 0L
             )
         }
+        timePaused = 0
     }
 
     private fun handleEstimatedTimeResult(time: Int){
@@ -188,9 +206,10 @@ class TranscribeViewModel(
 
     fun deleteRecording(){
         audioBuffer.clear()
-        _transcribeUiState.update { currentState  ->
-            currentState.copy(
-                transcriptionState = TranscriptionState.INACTIVE
+        _transcribeUiState.update { uiState ->
+            uiState.copy(
+                transcriptionState = TranscriptionState.INACTIVE,
+                timeRecorded = 0,
             )
         }
         recordingStartedTime = 0L
@@ -198,35 +217,64 @@ class TranscribeViewModel(
         _waveAmplitudes.update { emptyList() }
     }
 
+    @OptIn(ExperimentalTime::class)
     fun pauseRecording(){
-        audioRecorder.stopRecording()
+        if (stopOnAppClose){
+            audioRecorder.stopRecording()
+        } else {
+            context.startService(
+                TalkBridgeForegroundService.pauseTranscribeIntent(
+                    context
+                )
+            )
+        }
         _transcribeUiState.update { currentState  ->
             currentState.copy(
                 transcriptionState = TranscriptionState.PAUSED
             )
         }
+        pauseStarted = Clock.System.now().epochSeconds
     }
 
+    @OptIn(ExperimentalTime::class)
     fun resumeRecording(){
         _transcribeUiState.update { currentState  ->
             currentState.copy(
                 transcriptionState = TranscriptionState.RECORDING
             )
         }
-        viewModelScope.launch {
-            audioRecorder.startRecording { audioData ->
-                try {
-                    storeAudioData(audioData)
-                    updateTimeRecorded()
-                } catch (e: Exception) {
-                    Log.e("Transcribe", e.toString())
+        if (stopOnAppClose){
+            viewModelScope.launch {
+                audioRecorder.startRecording { audioData ->
+                    try {
+                        storeAudioData(audioData)
+                        updateTimeRecorded()
+                    } catch (e: Exception) {
+                        Log.e("Transcribe", e.toString())
+                    }
                 }
             }
+        } else {
+            context.startService(
+                TalkBridgeForegroundService.resumeTranscribeIntent(
+                    context
+                )
+            )
         }
+        timePaused += (Clock.System.now().epochSeconds - pauseStarted).toInt()
     }
 
     fun stopRecording(){
-        audioRecorder.stopRecording()
+        if (stopOnAppClose){
+            audioRecorder.stopRecording()
+        } else {
+            context.startService(
+                TalkBridgeForegroundService.stopIntent(context)
+            )
+            recordingJob?.cancel()
+            recordingJob = null
+        }
+        timePaused = 0
         chunkCounter = 0
         _transcribeUiState.update { currentState  ->
             currentState.copy(
@@ -237,19 +285,40 @@ class TranscribeViewModel(
 
     @OptIn(ExperimentalTime::class)
     fun startRecording(){
+        recordingJob?.cancel()
+
         recordingStartedTime = Clock.System.now().epochSeconds
         _transcribeUiState.update { currentState  ->
             currentState.copy(
                 transcriptionState = TranscriptionState.RECORDING
             )
         }
-        viewModelScope.launch {
-            audioRecorder.startRecording { audioData ->
-                try {
-                    storeAudioData(audioData)
-                    updateTimeRecorded()
-                } catch (e: Exception) {
-                    Log.e("Transcribe", e.toString())
+        if (stopOnAppClose){
+            viewModelScope.launch {
+                audioRecorder.startRecording { audioData ->
+                    try {
+                        storeAudioData(audioData)
+                        updateTimeRecorded()
+                    } catch (e: Exception) {
+                        Log.e("Transcribe", e.toString())
+                    }
+                }
+            }
+        }
+        else {
+            context.startService(
+                TalkBridgeForegroundService.startTranscribeIntent(
+                    context
+                )
+            )
+            recordingJob = viewModelScope.launch {
+                transcribeRecordingAudioFlow.collect { audioData ->
+                    try {
+                        storeAudioData(audioData)
+                        updateTimeRecorded()
+                    } catch (e: Exception) {
+                        Log.e("Transcribe", e.toString())
+                    }
                 }
             }
         }
@@ -324,7 +393,7 @@ class TranscribeViewModel(
         val currentTime: Long = Clock.System.now().epochSeconds
         _transcribeUiState.update { currentState ->
             currentState.copy(
-                timeRecorded = (currentTime - recordingStartedTime).toInt()
+                timeRecorded = ((currentTime - recordingStartedTime)).toInt() - timePaused
             )
         }
     }

@@ -123,6 +123,9 @@ class HomeViewModel(
                 connectionState = ConnectionState.FAILED
             )
         }
+        if (stopOnAppClose){
+            context.startService(TalkBridgeForegroundService.stopIntent(context))
+        }
     }
 
     fun connectWithServer(){
@@ -168,7 +171,7 @@ class HomeViewModel(
                 if (stopOnAppClose) {
                     startRecording()
                 } else {
-                    context.startService(TalkBridgeForegroundService.resumeIntent(context))
+                    context.startService(TalkBridgeForegroundService.resumeLiveIntent(context))
                 }
                 _homeUiState.update { it.copy(connectionState = ConnectionState.READY) }
             }
@@ -178,7 +181,7 @@ class HomeViewModel(
                     audioRecorder.stopRecording()
                     talkBridgeClient.resetSession()
                 } else {
-                    context.startService(TalkBridgeForegroundService.pauseIntent(context))
+                    context.startService(TalkBridgeForegroundService.pauseLiveIntent(context))
                 }
                 _homeUiState.update { it.copy(connectionState = ConnectionState.PAUSED) }
             }

@@ -68,7 +68,7 @@ class TalkBridgeClient(
 
     fun setUseBetterTranslation(value: Boolean){
         useBetterTranslation = value
-        Log.d(TAG, useBetterTranslation.toString())
+//        Log.d(TAG, useBetterTranslation.toString())
     }
 
     fun connectWebsocket(
@@ -82,7 +82,8 @@ class TalkBridgeClient(
             .build()
 
         Log.d(TAG,"trying to connect")
-        Log.d(TAG, useBetterTranslation.toString())
+        Log.d(TAG, "useBetterTranslation: $useBetterTranslation")
+
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {

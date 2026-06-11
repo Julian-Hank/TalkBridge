@@ -83,6 +83,7 @@
     <string name="copy">Kopieren</string>
     <string name="general">Allgemein</string>
     <string name="custom_ip">Benutzerdefinierte IP Adresse</string>
-    <string name="better_translations">Bessere Übersetzungen (erhöht die Latenz) *Empfohlen</string>
+    <string name="better_translations">Beste Übersetzungsqualität&lt;br&gt;&lt;i&gt;(erhöht die Latenz) *Empfohlen&lt;/i&gt;</string>
+    <string name="background_processing">Hintergrund-Verarbeitung\nAufgaben können zuverlässig weiterlaufen, wenn die App minimiert wird.</string>
     <string name="my_transcriptions">Meine Transkriptionen</string>
 </resources>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_logo">TalkBridge applogotyp</string>
+    <string name="app_name_on_homescreen">Live Translator</string>
+
+    <string name="back_button">Bakåt</string>
+    <string name="settings">Inställningar</string>
+
+    <string name="transcribe">Transkribera</string>
+    <string name="translate">Översätt</string>
+    <string name="live_translate">Live-översättning</string>
+
+    <string name="start_live_translate">Starta live-\növersättning</string>
+    <string name="stop_live_translate">Stoppa live-\növersättning</string>
+    <string name="start_recording">Starta\ninspelning</string>
+    <string name="delete_recording">Radera\ninspelning</string>
+    <string name="switch_languages">Byt språk</string>
+
+    <string name="listening">Lyssnar…</string>
+    <string name="press_microphone_to_speak">Tryck på mikrofonen för att tala</string>
+
+    <string name="transcription">Transkription</string>
+    <string name="choose_language">Välj språk</string>
+    <string name="language_select">Språkval</string>
+
+    <string name="german">Tyska</string>
+    <string name="english">Engelska</string>
+    <string name="russian">Ryska</string>
+    <string name="polish">Polska</string>
+    <string name="french">Franska</string>
+    <string name="chinese">Kinesiska</string>
+    <string name="ukrainian">Ukrainska</string>
+    <string name="spanish">Spanska</string>
+    <string name="portuguese">Portugisiska</string>
+    <string name="turkish">Turkiska</string>
+    <string name="italian">Italienska</string>
+    <string name="japanese">Japanska</string>
+    <string name="swedish">Svenska</string>
+    <string name="korean">Koreanska</string>
+    <string name="dutch">Nederländska</string>
+    <string name="vietnamese">Vietnamesiska</string>
+
+    <string name="stop_recording">Stoppa\ninspelning</string>
+    <string name="search_language">Sök språk</string>
+    <string name="delete">Radera</string>
+    <string name="source_language">Källspråk</string>
+    <string name="target_language">Målspråk</string>
+    <string name="all_languages">Alla språk</string>
+
+    <string name="permission_dialog_title">Behörighet krävs</string>
+    <string name="permission_dialog_description">Mikrofonbehörighet krävs för live-översättningar. Aktivera den i appens inställningar.</string>
+    <string name="open_settings">Öppna inställningar</string>
+    <string name="cancel">Avbryt</string>
+    <string name="waiting_for_connection">Väntar på anslutning…</string>
+    <string name="connection_established">Anslutning upprättad\nStartar modell…</string>
+    <string name="connection_failed">Anslutningen misslyckades</string>
+    <string name="try_again">Försök igen</string>
+    <string name="recently_used">Nyligen använda</string>
+    <string name="conversation">Konversation</string>
+    <string name="connecting">Anslutning till servern\nupprättas</string>
+    <string name="transcription_ready">Transkription redo</string>
+    <string name="recording_processed">Inspelningen bearbetas</string>
+    <string name="view_transcription">Visa transkription</string>
+    <string name="time_left">%d sekunder</string>
+    <string name="pause">Paus</string>
+    <string name="resume">Återuppta</string>
+    <string name="auto_detect">Identifiera automatiskt</string>
+    <string name="choose_lang">Välj språk</string>
+    <string name="transcriptions">Transkriptioner</string>
+    <string name="no_transcriptions">Inga transkriptioner ännu</string>
+    <string name="delete_entry">Radera post</string>
+    <string name="sure_delete_entry">Är du säker på at du vill radera denna post?</string>
+    <string name="enter_text">Ange text</string>
+    <string name="translation">Översättning</string>
+    <string name="copied">Kopierat</string>
+    <string name="copy">Kopiera</string>
+    <string name="general">Allmänt</string>
+    <string name="custom_ip">Anpassad IP-adress</string>
+    <string name="better_translations">Bästa översättningskvalitet&lt;br&gt;&lt;i&gt;(ökar latens) *Rekommenderas"&lt;/i&gt;</string>
+    <string name="background_processing">Bakgrundsbearbetning\nHåller uppgifter igång smidigt även om du minimerar appen.</string>
+    <string name="my_transcriptions">Mina transkriptioner</string>
+</resources>

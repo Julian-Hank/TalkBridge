@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.talkbridge.livetranslator.data.repository.TranscriptionItemsRepository
 import com.talkbridge.livetranslator.data.repository.TranslationHistoryItemsRepository
 import com.talkbridge.livetranslator.data.repository.UserPreferencesRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 interface AppContainer {
     val transcriptionItemsRepository: TranscriptionItemsRepository
@@ -14,6 +15,7 @@ interface AppContainer {
     val userPreferencesRepository: UserPreferencesRepository
     val talkBridgeClient: TalkBridgeClient
 
+    val transcribeRecordingAudioFlow: MutableSharedFlow<ByteArray>
 }
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
@@ -32,5 +34,8 @@ class AppDataContainer(private val context: Context) : AppContainer {
     }
     override val talkBridgeClient: TalkBridgeClient by lazy {
         TalkBridgeClient(context)
+    }
+    override val transcribeRecordingAudioFlow by lazy {
+        MutableSharedFlow<ByteArray>(extraBufferCapacity = 64)
     }
 }

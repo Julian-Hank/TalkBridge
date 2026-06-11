@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_logo">TalkBridge app-logo</string>
+    <string name="app_name_on_homescreen">Live Translator</string>
+
+    <string name="back_button">Terug</string>
+    <string name="settings">Instellingen</string>
+
+    <string name="transcribe">Transkriberen</string>
+    <string name="translate">Vertalen</string>
+    <string name="live_translate">Live vertalen</string>
+
+    <string name="start_live_translate">Start live\nvertaling</string>
+    <string name="stop_live_translate">Stop live\nvertaling</string>
+    <string name="start_recording">Start\nopname</string>
+    <string name="delete_recording">Verwijder\nopname</string>
+    <string name="switch_languages">Talen wisselen</string>
+
+    <string name="listening">Luisteren…</string>
+    <string name="press_microphone_to_speak">Druk op de microfoon om te spreken</string>
+
+    <string name="transcription">Transcriptie</string>
+    <string name="choose_language">Kies taal</string>
+    <string name="language_select">Taal selecteren</string>
+
+    <string name="german">Duits</string>
+    <string name="english">Engels</string>
+    <string name="russian">Russisch</string>
+    <string name="polish">Pools</string>
+    <string name="french">Frans</string>
+    <string name="chinese">Chinees</string>
+    <string name="ukrainian">Oekraïens</string>
+    <string name="spanish">Spaans</string>
+    <string name="portuguese">Portugees</string>
+    <string name="turkish">Turks</string>
+    <string name="italian">Italiaans</string>
+    <string name="japanese">Japans</string>
+    <string name="swedish">Zweeds</string>
+    <string name="korean">Koreaans</string>
+    <string name="dutch">Nederlands</string>
+    <string name="vietnamese">Vietnamees</string>
+
+    <string name="stop_recording">Stop\nopname</string>
+    <string name="search_language">Taal zoeken</string>
+    <string name="delete">Verwijderen</string>
+    <string name="source_language">Brontaal</string>
+    <string name="target_language">Doeltaal</string>
+    <string name="all_languages">Alle talen</string>
+
+    <string name="permission_dialog_title">Toestemming vereist</string>
+    <string name="permission_dialog_description">Microfoontoestemming is vereist voor live vertalingen. Schakel dit in bij de app-instellingen.</string>
+    <string name="open_settings">Instellingen openen</string>
+    <string name="cancel">Annuleren</string>
+    <string name="waiting_for_connection">Wachten op verbinding…</string>
+    <string name="connection_established">Verbinding gemaakt\nModel starten…</string>
+    <string name="connection_failed">Verbinding mislukt</string>
+    <string name="try_again">Opnieuw proberen</string>
+    <string name="recently_used">Onlangs gebruikt</string>
+    <string name="conversation">Gesprek</string>
+    <string name="connecting">Verbinding met de server\nwordt tot stand gebracht</string>
+    <string name="transcription_ready">Transcriptie gereed</string>
+    <string name="recording_processed">Opname wordt verwerkt</string>
+    <string name="view_transcription">Bekijk transcriptie</string>
+    <string name="time_left">%d seconden</string>
+    <string name="pause">Pauze</string>
+    <string name="resume">Hervatten</string>
+    <string name="auto_detect">Automatisch detecteren</string>
+    <string name="choose_lang">Kies taal</string>
+    <string name="transcriptions">Transcripties</string>
+    <string name="no_transcriptions">Nog geen transcripties</string>
+    <string name="delete_entry">Vermelding verwijderen</string>
+    <string name="sure_delete_entry">Weet u zeker dat u deze vermelding wilt verwijderen?</string>
+    <string name="enter_text">Tekst invoeren</string>
+    <string name="translation">Vertaling</string>
+    <string name="copied">Gekopieerd</string>
+    <string name="copy">Kopiëren</string>
+    <string name="general">Algemeen</string>
+    <string name="custom_ip">Aangepast IP-adres</string>
+    <string name="better_translations">Beste vertaalkwaliteit&lt;br&gt;&lt;i&gt;(verhoogt latentie) *Aanbevolen"&lt;/i&gt;</string>
+    <string name="background_processing">Achtergrondverwerking\nHoudt taken soepel actief, zelfs als u de app minimaliseert.</string>
+    <string name="my_transcriptions">Mijn transcripties</string>
+</resources>
