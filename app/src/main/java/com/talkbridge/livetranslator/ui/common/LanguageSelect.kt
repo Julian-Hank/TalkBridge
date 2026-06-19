@@ -1,6 +1,7 @@
 package com.talkbridge.livetranslator.ui.common
 
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
@@ -96,6 +97,7 @@ fun LanguageSelectScreen(
     }
 }
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun LanguageSelectBody(
     modifier: Modifier = Modifier,

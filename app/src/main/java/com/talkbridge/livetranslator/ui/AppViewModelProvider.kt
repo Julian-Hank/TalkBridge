@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.talkbridge.livetranslator.TalkBridgeApplication
+import com.talkbridge.livetranslator.ui.connect.ConnectViewModel
 import com.talkbridge.livetranslator.ui.home.HomeViewModel
 import com.talkbridge.livetranslator.ui.settings.SettingsViewModel
 import com.talkbridge.livetranslator.ui.transcribe.TranscribeItemViewModel
@@ -52,6 +53,11 @@ object AppViewModelProvider {
         initializer {
             SettingsViewModel(
                 userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository
+            )
+        }
+        initializer {
+            ConnectViewModel(
+                bleConnectManager = talkBridgeApplication().container.bleConnectManager
             )
         }
     }

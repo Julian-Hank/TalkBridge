@@ -16,6 +16,10 @@ interface AppContainer {
     val talkBridgeClient: TalkBridgeClient
 
     val transcribeRecordingAudioFlow: MutableSharedFlow<ByteArray>
+
+    val connectivityObserver: ConnectivityObserver
+
+    val bleConnectManager: BLEConnectManager
 }
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
@@ -37,5 +41,11 @@ class AppDataContainer(private val context: Context) : AppContainer {
     }
     override val transcribeRecordingAudioFlow by lazy {
         MutableSharedFlow<ByteArray>(extraBufferCapacity = 64)
+    }
+    override val connectivityObserver: ConnectivityObserver by lazy {
+        ConnectivityObserver(context)
+    }
+    override val bleConnectManager: BLEConnectManager by lazy {
+        BLEConnectManager(context)
     }
 }

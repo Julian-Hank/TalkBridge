@@ -16,6 +16,8 @@ class TalkBridgeApplication: Application() {
         super.onCreate()
         container = AppDataContainer(this)
         observeClientSettings()
+        container.connectivityObserver
+        container.bleConnectManager.bind()
     }
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -23,7 +25,7 @@ class TalkBridgeApplication: Application() {
     private fun observeClientSettings() {
         applicationScope.launch {
             container.userPreferencesRepository.customIPAddress.collect { ip ->
-                container.talkBridgeClient.updateIpAddress(ip)
+                container.talkBridgeClient.updateServerAddress(ip)
             }
         }
         applicationScope.launch {

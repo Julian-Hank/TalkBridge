@@ -402,7 +402,7 @@ class TranscribeViewModel(
 data class TranscribeUiState(
     val transcriptionState: TranscriptionState = TranscriptionState.INACTIVE,
     val timeRecorded: Int = 0,
-    val autoDetectLanguage: Boolean = false,
+    val autoDetectLanguage: Boolean = true,
     val selectedLanguage: LanguageData = LanguageData(R.string.german, R.drawable.germany_flag_circular),
     val transcriptionProgress: Float = 0f,
     val timeLeft: Int = 0,

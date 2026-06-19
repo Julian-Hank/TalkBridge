@@ -85,4 +85,6 @@
     <string name="better_translations">Best translation quality&lt;br&gt;&lt;i&gt;(increases Latency) *Recommended"&lt;/i&gt;</string>
     <string name="background_processing">Background Processing\nKeeps tasks running smoothly even if you minimize the app.</string>
     <string name="my_transcriptions">My transcriptions</string>
+    <string name="model_download">Offline Model Download</string>
+    <string name="ble_connect">BLE connect</string>
 </resources>

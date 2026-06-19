@@ -24,7 +24,10 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 private const val TAG: String = "TalkBridgeClient"
-private const val DEFAULT_IP = "192.168.68.60"
+private const val DEFAULT_IP = "192.168.68.57"
+
+private const val DEFAULT_PORT = "8080"
+
 
 sealed class ClientEvent {
     object Connected : ClientEvent()
@@ -45,7 +48,7 @@ enum class SERVER_RESPONSE {
 class TalkBridgeClient(
     private val context: Context,
 ) {
-    var serverIpAddress: String = DEFAULT_IP
+    var serverAddress: String = "$DEFAULT_IP:$DEFAULT_PORT"
         private set
 
     var useBetterTranslation: Boolean = true
@@ -55,6 +58,7 @@ class TalkBridgeClient(
     private val client = OkHttpClient.Builder()
         .connectTimeout(6, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.SECONDS)  // kein Timeout für SSE
+        .writeTimeout(15, TimeUnit.SECONDS)
         .build()
 
     private val audioOutputManager: AudioOutputManager = AudioOutputManager(context)
@@ -62,8 +66,8 @@ class TalkBridgeClient(
     private val _events = MutableSharedFlow<ClientEvent>(extraBufferCapacity = 9)
     val events: SharedFlow<ClientEvent> = _events.asSharedFlow()
 
-    fun updateIpAddress(ip: String) {
-        serverIpAddress = ip.ifBlank { DEFAULT_IP }
+    fun updateServerAddress(ip: String) {
+        serverAddress = ip.ifBlank { DEFAULT_IP }
     }
 
     fun setUseBetterTranslation(value: Boolean){
@@ -75,7 +79,9 @@ class TalkBridgeClient(
         sourceLang: String,
         targetLang: String
     ) {
-        val webSocketUrlUrl = "ws://$serverIpAddress:80/ws/translate"
+//        val webSocketUrlUrl = "ws://$serverIpAddress:80/ws/translate"
+//        val webSocketUrlUrl = "ws://ggz8mvvr-8080.euw.devtunnels.ms/ws/translate"
+        val webSocketUrlUrl = "ws://$serverAddress/ws/translate"
 
         val request = Request.Builder()
             .url(webSocketUrlUrl)
@@ -177,7 +183,7 @@ class TalkBridgeClient(
         audioData: ByteArray,
         lang: String
     ) {
-        Log.d(TAG, "Sending audio")
+        Log.d(TAG, "Sending audio for transcript")
         val requestBody = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart("lang", lang)
@@ -189,7 +195,8 @@ class TalkBridgeClient(
             .build()
 
         val request = Request.Builder()
-            .url("http://$serverIpAddress:80/transcript")
+//            .url("http://$serverIpAddress:80/transcript")
+            .url("http://$serverAddress/transcript")
             .post(requestBody)
             .build()
 
@@ -243,7 +250,8 @@ class TalkBridgeClient(
             .build()
 
         val request = Request.Builder()
-            .url("http://$serverIpAddress:80/translate")
+//            .url("http://$serverIpAddress:80/translate")
+            .url("http://$serverAddress/translate")
             .post(requestBody)
             .build()
 

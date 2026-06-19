@@ -375,3 +375,23 @@ private fun LanguageCardPreview() {
         LanguageSwapCard()
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun TranslateScreenPreview() {
+    TalkBridgeLiveTheme {
+        TranslateScreen(
+            openSettings = {},
+            onTargetLanguageClick = {},
+            onSourceLanguageClick = {},
+            onLanguageSwapClick = {},
+            onInputChanged = {},
+            uiState = TranslateUiState(
+                sourceLanguage = LanguageDataSource.languagesMap.getValue(Language.ENGLISH),
+                targetLanguage = LanguageDataSource.languagesMap.getValue(Language.GERMAN),
+                sourceLanguageText = "Hello, how are you?",
+                targetLanguageText = "Hallo, wie geht es dir?"
+            )
+        )
+    }
+}

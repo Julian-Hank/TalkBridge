@@ -1,6 +1,8 @@
 package com.talkbridge.livetranslator.ui.home
 
 import android.Manifest
+import android.app.Activity
+import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -99,6 +101,7 @@ fun HomeScreen(
     onPauseButtonClick: () -> Unit = {},
     onLanguageSwapClick: () -> Unit = {},
     onBackButtonClick: () -> Unit = {},
+    openConnectScreen: () -> Unit = {},
     uiState: HomeUiState,
 ) {
 
@@ -107,6 +110,60 @@ fun HomeScreen(
             && uiState.connectionState != ConnectionState.CONNECTING
             && uiState.connectionState != ConnectionState.CONNECTED
 
+    val context = LocalContext.current
+    var showBluetoothDialog by remember { mutableStateOf(false) }
+
+    val bluetoothPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+    } else {
+        arrayOf(Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+
+    val bluetoothLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                openConnectScreen()
+            }
+        }
+
+    val bluetoothPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions.values.all { it }) {
+            bluetoothLauncher.launch(
+                Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+            )
+        } else {
+            showBluetoothDialog = true
+        }
+    }
+
+
+
+    if (showBluetoothDialog) {
+        AlertDialog(
+            onDismissRequest = { showBluetoothDialog = false },
+            title = { Text(stringResource(R.string.permission_dialog_title)) },
+            text = { Text("Bluetooth permission is required to connect a Bluetooth LE device.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showBluetoothDialog = false
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                }) { Text(stringResource(R.string.open_settings)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBluetoothDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -114,7 +171,9 @@ fun HomeScreen(
                 title = if (!canNavigateBack) null else stringResource(R.string.live_translate),
                 canNavigateBack = canNavigateBack,
                 navigateUp = onBackButtonClick,
-                openSettings = openSettings
+                openSettings = openSettings,
+                actionIcon = R.drawable.outline_bluetooth_searching_24,
+                onActionClick = { bluetoothPermissionLauncher.launch(bluetoothPermissions) }
             )
         },
         bottomBar = {
@@ -492,6 +551,64 @@ fun LanguageItem(
     }
 }
 
+//@Composable
+//fun RequestBluetoothPermission(
+//    onPermissionGranted: () -> Unit
+//) {
+//    var showDialog = false
+//
+//    val context = LocalContext.current
+//    val bluetoothPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//        arrayOf(
+//            Manifest.permission.BLUETOOTH_SCAN,
+//            Manifest.permission.BLUETOOTH_CONNECT
+//        )
+//    } else {
+//        arrayOf(
+//            Manifest.permission.BLUETOOTH,
+//            Manifest.permission.BLUETOOTH_ADMIN,
+//            Manifest.permission.ACCESS_FINE_LOCATION
+//        )
+//    }
+//
+//    val launcher = rememberLauncherForActivityResult(
+//        ActivityResultContracts.RequestMultiplePermissions()
+//    ) { permissions ->
+//        val allGranted = permissions.values.all { it }
+//        if (allGranted) {
+//            onPermissionGranted()
+//        } else {
+//            showDialog = true
+//        }
+//    }
+//
+//    if (showDialog){
+//        AlertDialog(
+//            onDismissRequest = {  },
+//            title = { Text(text = stringResource(R.string.permission_dialog_title)) },
+//            text = { Text(text = "Bluetooth permission is required if you want to connect a Bluetooth LE device") },
+//            confirmButton = {
+//                TextButton(onClick = {
+//                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+//                        data = Uri.fromParts("package", context.packageName, null)
+//                    }
+//                    context.startActivity(intent)
+//                }) {
+//                    Text(stringResource(R.string.open_settings))
+//                }
+//            },
+//            dismissButton = {
+//                TextButton(onClick = {  }) {
+//                    Text(stringResource(R.string.cancel))
+//                }
+//            }
+//        )
+//    }
+//
+//
+//    launcher.launch(bluetoothPermissions)
+//}
+
 @Composable
 fun StartButton(
     active: Boolean = true,
@@ -606,12 +723,18 @@ fun StartButton(
                             when {
                                 // 1. Notification-Permission (nur Android 13+)
                                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                                        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                                        ContextCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.POST_NOTIFICATIONS
+                                        )
                                         != PackageManager.PERMISSION_GRANTED -> {
                                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                 }
                                 // 2. Microphone-Permission
-                                ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.RECORD_AUDIO
+                                )
                                         != PackageManager.PERMISSION_GRANTED -> {
                                     micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                                 }
