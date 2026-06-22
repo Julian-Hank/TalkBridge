@@ -1,6 +1,7 @@
 package com.talkbridge.livetranslator.ui.connect
 
 import android.bluetooth.BluetoothDevice
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,12 +10,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -67,41 +71,20 @@ fun ConnectBody(
     onConnectClick: (BluetoothDevice) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier =  modifier) {
-        Text(
-            text = "This screen will search Bluetooth Low Energy (BLE) devices and makes it possible to connect with them. This way the connected and/or translated speech data can be transmitted to a device of your choosing.",
-            modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp),
-            textAlign = TextAlign.Center,
-            color = Color.Gray,
-            fontSize = 12.sp
-        )
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 40.dp, vertical = 24.dp))
-        Spacer(modifier = Modifier.height(4.dp))
-        if (!uiState.bluetoothAvailable){
+    if (uiState.connectedBLEDevice == null){
+        Column(modifier =  modifier) {
             Text(
-                text = "bluetooth unavailable",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 36.dp),
+                text = "This screen will search Bluetooth Low Energy (BLE) devices and makes it possible to connect with them. This way the connected and/or translated speech data can be transmitted to a device of your choosing.",
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp),
                 textAlign = TextAlign.Center,
                 color = Color.Gray,
                 fontSize = 12.sp
             )
-        } else {
-            if (uiState.availableBLEDevices.isNotEmpty()){
-                LazyColumn(
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    items(items = uiState.availableBLEDevices){ device ->
-                        BLEItem(device, onConnectClick)
-                    }
-                }
-            } else {
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 40.dp, vertical = 24.dp))
+            Spacer(modifier = Modifier.height(4.dp))
+            if (!uiState.bluetoothAvailable){
                 Text(
-                    text = "no devices",
+                    text = "bluetooth unavailable",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 36.dp),
@@ -109,8 +92,81 @@ fun ConnectBody(
                     color = Color.Gray,
                     fontSize = 12.sp
                 )
+            } else {
+                if (uiState.availableBLEDevices.isNotEmpty()){
+                    LazyColumn(
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        items(items = uiState.availableBLEDevices.sortedBy { -(it.rssi) }){ device ->
+                            BLEItem(device, onConnectClick)
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "no devices",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 36.dp),
+                        textAlign = TextAlign.Center,
+                        color = Color.Gray,
+                        fontSize = 12.sp
+                    )
+                }
             }
         }
+    } else {
+        Text("device ${uiState.connectedBLEDevice.name} : ${uiState.connectedBLEDevice.address} connected") //temporär -> TODO: device control panel mit disconnect btn
+    }
+}
+
+@Composable
+fun DeviceDashBoard(
+    device: BLEDevice,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+    ) {
+        //name (row akku?)
+        Text(
+            text = device.name
+        )
+        //address
+        Text(
+            text = device.address
+        )
+        //Services?
+        //Spacer
+        Spacer(modifier = Modifier.height(16.dp))
+        //verbundene Zeit?
+        Box {
+            Row {
+                Text(
+                    text = "Übersetzten Text senden",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(7f),
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Switch(
+                    checked = false,
+                    onCheckedChange = { },
+                    modifier = Modifier.weight(2.5f)
+                )
+            }
+        }
+        Button(
+            onClick = {}
+        ) {
+            Text(
+                "disconnect"
+            )
+        }
+        //switch setting
+        //disconnect
     }
 }
 
@@ -130,7 +186,7 @@ fun BLEItem(
         onClick = { onConnectClick(bleDevice.device) }
     ){
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .padding(vertical = 16.dp, horizontal = 16.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically

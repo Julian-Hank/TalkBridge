@@ -1,7 +1,6 @@
 package com.talkbridge.livetranslator.data
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
@@ -15,11 +14,13 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.talkbridge.livetranslator.ui.connect.BLEDevice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -28,6 +29,8 @@ import kotlinx.coroutines.launch
 sealed class BLEEvent {
     object BluetoothUnavailable : BLEEvent()
     data class DeviceConnected(val bleDevice: BLEDevice) : BLEEvent()
+//    object DeviceConnected : BLEEvent()
+    object DeviceDisconnected : BLEEvent()
     data class DeviceFound(val bleDevice: BLEDevice) : BLEEvent()
 }
 
@@ -39,7 +42,7 @@ class BLEConnectManager(private val context: Context) {
 
     private var scanning = false
     private val SCAN_PERIOD: Long = 10000
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
 
 
     private val _events = MutableSharedFlow<BLEEvent>(
@@ -49,6 +52,8 @@ class BLEConnectManager(private val context: Context) {
 
     private var bleService : BLEService? = null
 
+    private var eventJob: Job? = null
+
     private val serviceConnection = object : ServiceConnection {
 
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
@@ -56,7 +61,7 @@ class BLEConnectManager(private val context: Context) {
             bleService = localBinder.getService()
 
             // Events vom Service weiterreichen
-            CoroutineScope(Dispatchers.Main).launch {
+            eventJob = CoroutineScope(Dispatchers.Main).launch {
                 bleService?.events?.collect {
                     _events.emit(it)
                 }
@@ -65,9 +70,9 @@ class BLEConnectManager(private val context: Context) {
 
         override fun onServiceDisconnected(p0: ComponentName?) {
             bleService = null
+            eventJob?.cancel()
+            eventJob = null
         }
-
-
     }
 
     init {
@@ -81,6 +86,11 @@ class BLEConnectManager(private val context: Context) {
         context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
+    fun unbind(){
+        val intent = Intent(context, BLEService::class.java)
+        context.unbindService(serviceConnection)
+    }
+
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun connect(device: BluetoothDevice) {
         bleService?.connect(device)
@@ -91,6 +101,7 @@ class BLEConnectManager(private val context: Context) {
         bleService?.disconnect()
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun writeCharacteristic(data: ByteArray) {
         bleService?.writeCharacteristic(data)
     }
@@ -100,21 +111,22 @@ class BLEConnectManager(private val context: Context) {
         gatt.disconnect()
     }
 
-    @SuppressLint("MissingPermission")
+    @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     fun scanBLEDevice() {
         Log.d("BLEConnect", "scan start")
-        if (!scanning) { // Stops scanning after a pre-defined scan period.
-            handler.postDelayed({
-                scanning = false
-                bluetoothLeScanner?.stopScan(bleScanCallback)
-            }, SCAN_PERIOD)
-            scanning = true
-            bluetoothLeScanner?.startScan(bleScanCallback)
-        } else {
+
+        if (scanning) {
+            bluetoothLeScanner?.stopScan(bleScanCallback)
+        }
+        handler.removeCallbacksAndMessages(null)
+
+        scanning = true
+        bluetoothLeScanner?.startScan(bleScanCallback)
+
+        handler.postDelayed({
             scanning = false
             bluetoothLeScanner?.stopScan(bleScanCallback)
-            scanBLEDevice()
-        }
+        }, SCAN_PERIOD)
     }
 
     private val bleScanCallback: ScanCallback = object : ScanCallback() {
@@ -122,7 +134,6 @@ class BLEConnectManager(private val context: Context) {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             Log.d("BLEConnect scan result", result.toString())
             super.onScanResult(callbackType, result)
-            //rssi = result.getRssi
             if (result.isConnectable){
                 _events.tryEmit(BLEEvent.DeviceFound(BLEDevice(result.device, result.device.name ?: "Unnamed", result.device.address, result.rssi)))
             }

@@ -20,6 +20,11 @@ class TalkBridgeApplication: Application() {
         container.bleConnectManager.bind()
     }
 
+    override fun onTerminate() {
+        super.onTerminate()
+        container.bleConnectManager.unbind()
+    }
+
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private fun observeClientSettings() {

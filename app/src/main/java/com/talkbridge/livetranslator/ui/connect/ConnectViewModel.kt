@@ -73,7 +73,17 @@ class ConnectViewModel(
                             }
                         }
                     }
-                    else -> { }
+                    is BLEEvent.DeviceConnected -> {
+                        Log.d("BLEConnect", "Connected")
+                        _connectUiState.update {
+                            _connectUiState.value.copy(
+                                connectedBLEDevice = event.bleDevice
+                            )
+                        }
+                    }
+                    is BLEEvent.DeviceDisconnected -> {
+                        Log.d("BLEConnect", "Disconnected")
+                    }
                 }
             }
         }
@@ -82,8 +92,8 @@ class ConnectViewModel(
 
 
 data class ConnectUiState(
-//    val availableBLEDevices: List<BLEDevice> = listOf<BLEDevice>(BLEDevice("AR clip on"), BLEDevice("oled screen")),
     val availableBLEDevices: List<BLEDevice> = listOf<BLEDevice>(),
+    val connectedBLEDevice: BLEDevice? = null,
     val bluetoothAvailable: Boolean = true
 )
 

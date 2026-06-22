@@ -1,7 +1,6 @@
 package com.talkbridge.livetranslator.data
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Service
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -12,6 +11,7 @@ import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import androidx.annotation.RequiresPermission
+import com.talkbridge.livetranslator.ui.connect.BLEDevice
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 
@@ -31,12 +31,13 @@ class BLEService : Service() {
         return binder
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     override fun onUnbind(intent: Intent?): Boolean {
         close()
         return super.onUnbind(intent)
     }
 
-    @SuppressLint("MissingPermission")
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun close() {
         bluetoothGatt?.let { gatt ->
             gatt.close()
@@ -57,19 +58,44 @@ class BLEService : Service() {
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun disconnect() {
-        bluetoothGatt?.disconnect()
+        bluetoothGatt?.let { gatt ->
+            gatt.disconnect()
+            gatt.close()
+            bluetoothGatt = null
+        }
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun writeCharacteristic(data: ByteArray){
         TODO()
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
+        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
-            when (newState) {
-                BluetoothProfile.STATE_CONNECTED -> {}
-                BluetoothProfile.STATE_DISCONNECTED -> {}
-            }
+            if (status == BluetoothGatt.GATT_SUCCESS)
+                when (newState) {
+                    BluetoothProfile.STATE_CONNECTED -> {
+                        gatt?.discoverServices()
+                        _events.tryEmit(BLEEvent.DeviceConnected(
+                            BLEDevice(
+                                device = (gatt?.device as BluetoothDevice),
+                                name = "", //temp
+                                address = "",
+                                rssi = 0
+                            )
+                        ))
+                    }
+                    BluetoothProfile.STATE_DISCONNECTED -> {
+                        gatt?.close()
+                        bluetoothGatt = null
+                        _events.tryEmit(BLEEvent.DeviceDisconnected)
+                    }
+                }
+        }
+
+        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+
         }
     }
 }
