@@ -358,8 +358,10 @@ fun TalkBridgeNavHost(
 
                 ConnectScreen(
                     uiState = uiState,
-                    onConnectClick = { viewModel.connectBLEDevice(it) },
-                    onRescanClick = { viewModel.scanBleDevice() },
+                    viewModel = viewModel,
+//                    onConnectClick = { viewModel.connectBLEDevice(it) },
+//                    onDisconnectClick = { viewModel.disconnectBLEDevice() },
+//                    onRescanClick = { viewModel.scanBleDevice() },
                     onBackButtonPress = { navController.navigateUp() }
                 )
             }

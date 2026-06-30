@@ -6,8 +6,8 @@ import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.talkbridge.livetranslator.data.BLEConnectManager
-import com.talkbridge.livetranslator.data.BLEEvent
+import com.talkbridge.livetranslator.data.ble.BLEConnectManager
+import com.talkbridge.livetranslator.data.ble.BLEEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -58,6 +58,14 @@ class ConnectViewModel(
         }
     }
 
+    fun clearConnectionInfo(){
+        _connectUiState.update {
+            _connectUiState.value.copy(
+                connectionInfo = null
+            )
+        }
+    }
+
     private fun observeBLEEvents() {
         viewModelScope.launch {
             bleConnectManager.events.collect { event ->
@@ -83,6 +91,19 @@ class ConnectViewModel(
                     }
                     is BLEEvent.DeviceDisconnected -> {
                         Log.d("BLEConnect", "Disconnected")
+                        _connectUiState.update {
+                            _connectUiState.value.copy(
+                                connectedBLEDevice = null
+                            )
+                        }
+                    }
+                    is BLEEvent.ConnectionInfo -> {
+                        Log.d("BLEConnect", event.info)
+                        _connectUiState.update {
+                            _connectUiState.value.copy(
+                                connectionInfo = event.info
+                            )
+                        }
                     }
                 }
             }
@@ -94,11 +115,13 @@ class ConnectViewModel(
 data class ConnectUiState(
     val availableBLEDevices: List<BLEDevice> = listOf<BLEDevice>(),
     val connectedBLEDevice: BLEDevice? = null,
-    val bluetoothAvailable: Boolean = true
+    val bluetoothAvailable: Boolean = true,
+    val connectionInfo: String? = null
 )
 
 data class BLEDevice(
     val device: BluetoothDevice,
+//    val services: List<BluetoothGattService>? = null,
     val name: String,
     val address: String,
     val rssi: Int

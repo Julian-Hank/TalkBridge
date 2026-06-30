@@ -23,7 +23,7 @@ class TalkBridgeApplication: Application() {
     override fun onTerminate() {
         super.onTerminate()
         container.bleConnectManager.unbind()
-    }
+    }//wird fast nie aufgerufen
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 

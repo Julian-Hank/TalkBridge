@@ -1,9 +1,8 @@
-package com.talkbridge.livetranslator.data
+package com.talkbridge.livetranslator.data.ble
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
@@ -29,9 +28,10 @@ import kotlinx.coroutines.launch
 sealed class BLEEvent {
     object BluetoothUnavailable : BLEEvent()
     data class DeviceConnected(val bleDevice: BLEDevice) : BLEEvent()
-//    object DeviceConnected : BLEEvent()
     object DeviceDisconnected : BLEEvent()
     data class DeviceFound(val bleDevice: BLEDevice) : BLEEvent()
+
+    data class ConnectionInfo(val info: String): BLEEvent()
 }
 
 class BLEConnectManager(private val context: Context) {
@@ -57,12 +57,14 @@ class BLEConnectManager(private val context: Context) {
     private val serviceConnection = object : ServiceConnection {
 
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
+            Log.d("BLEConnect", "onServiceConnected")
             val localBinder = binder as BLEService.LocalBinder
             bleService = localBinder.getService()
 
             // Events vom Service weiterreichen
             eventJob = CoroutineScope(Dispatchers.Main).launch {
                 bleService?.events?.collect {
+                    Log.d("BLEConnect", "Manager relaying event: $it")
                     _events.emit(it)
                 }
             }
@@ -82,17 +84,19 @@ class BLEConnectManager(private val context: Context) {
     }
 
     fun bind() {
+        Log.d("BLEConnect", "bind")
         val intent = Intent(context, BLEService::class.java)
         context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
     fun unbind(){
-        val intent = Intent(context, BLEService::class.java)
         context.unbindService(serviceConnection)
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun connect(device: BluetoothDevice) {
+        stopScan()
+        Log.d("BLEConnect", "connect() called, bleService=$bleService")
         bleService?.connect(device)
     }
 
@@ -104,11 +108,6 @@ class BLEConnectManager(private val context: Context) {
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun writeCharacteristic(data: ByteArray) {
         bleService?.writeCharacteristic(data)
-    }
-
-    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    private fun disconnectBLEDevice(gatt: BluetoothGatt){
-        gatt.disconnect()
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
@@ -127,6 +126,14 @@ class BLEConnectManager(private val context: Context) {
             scanning = false
             bluetoothLeScanner?.stopScan(bleScanCallback)
         }, SCAN_PERIOD)
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
+    private fun stopScan(){
+        if (scanning) {
+            bluetoothLeScanner?.stopScan(bleScanCallback)
+        }
+        scanning = false
     }
 
     private val bleScanCallback: ScanCallback = object : ScanCallback() {
