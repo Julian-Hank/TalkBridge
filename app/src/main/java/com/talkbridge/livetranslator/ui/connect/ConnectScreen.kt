@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -53,9 +54,6 @@ object ConnectDestination: NavigationDestination{
 fun ConnectScreen(
     uiState: ConnectUiState,
     viewModel: ConnectViewModel,
-//    onConnectClick: (BluetoothDevice) -> Unit,
-//    onDisconnectClick: () -> Unit,
-//    onRescanClick: () -> Unit,
     onBackButtonPress: () -> Unit = {}
 ) {
     Scaffold(
@@ -64,7 +62,7 @@ fun ConnectScreen(
                 title = stringResource(ConnectDestination.titleRes),
                 canNavigateBack = true,
                 navigateUp = onBackButtonPress,
-                actionIcon = R.drawable.outline_forward_media_24,
+                actionIcon = if (uiState.connectedBLEDevice == null) R.drawable.outline_forward_media_24 else null,
                 onActionClick = { viewModel.scanBleDevice() }
             )
         },
@@ -73,6 +71,7 @@ fun ConnectScreen(
             uiState = uiState,
             onConnectClick = { viewModel.connectBLEDevice(it) },
             onDisconnectClick = { viewModel.disconnectBLEDevice() },
+            onSwitchSendTranslatedText = { viewModel.toggleSendTranslatedText() },
             modifier = Modifier.padding(innerPadding)
         )
         if (!uiState.connectionInfo.isNullOrBlank()){
@@ -87,6 +86,7 @@ fun ConnectBody(
     uiState: ConnectUiState,
     onConnectClick: (BluetoothDevice) -> Unit,
     onDisconnectClick: () -> Unit,
+    onSwitchSendTranslatedText: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (uiState.connectedBLEDevice == null){
@@ -132,6 +132,22 @@ fun ConnectBody(
                         color = Color.Gray,
                         fontSize = 12.sp
                     )
+                    if (uiState.scanning){
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .padding(top = 84.dp)
+                                .fillMaxWidth()
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .weight(6f)
+                                    .size(64.dp),
+                                strokeWidth = 4.dp,
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -139,6 +155,8 @@ fun ConnectBody(
         DeviceDashBoard(
             device = uiState.connectedBLEDevice,
             onDisconnectClick = onDisconnectClick,
+            onSwitchSendTranslatedText = onSwitchSendTranslatedText,
+            sendTranslatedText = uiState.sendTranslatedText,
             modifier =  modifier
         )
     }
@@ -152,7 +170,9 @@ fun ConnectionToast(text: String){
 @Composable
 fun DeviceDashBoard(
     device: BLEDevice,
+    sendTranslatedText: Boolean,
     onDisconnectClick: () -> Unit,
+    onSwitchSendTranslatedText: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -161,7 +181,7 @@ fun DeviceDashBoard(
             .padding(top = 8.dp)
             .fillMaxWidth()
     ) {
-        //name (row akku?)
+        //name, akku
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -170,43 +190,61 @@ fun DeviceDashBoard(
             Text(
                 text = device.name
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.outline_battery_0_bar_24),
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = "76%", //temp
-                    style = MaterialTheme.typography.bodySmall,
-                    fontSize = 14.sp,
-                )
+            if (device.batteryLevel != null){
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.outline_battery_0_bar_24),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "${device.batteryLevel}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 14.sp,
+                    )
+                }
             }
         }
         //address
         Text(
             text = device.address
         )
-        //Services?
-        //Spacer
         Spacer(modifier = Modifier.height(16.dp))
         //verbundene Zeit?
-        Box {
-            Row (verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Übersetzten Text senden",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.weight(7f),
-                    fontSize = 14.sp
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Switch(
-                    checked = false,
-                    onCheckedChange = { },
-                    modifier = Modifier.weight(2.5f)
-                )
+        if (device.isTalkBridgeCompatible){
+            Box {
+                Row (verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Übersetzten Text senden",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.weight(7f),
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Switch(
+                        checked = sendTranslatedText,
+                        onCheckedChange = onSwitchSendTranslatedText,
+                        modifier = Modifier.weight(2.5f)
+                    )
+                }
+            }
+        }
+        if (device.services.isNotEmpty()){
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Services"
+            )
+            LazyColumn() {
+                items(items = device.services){ service ->
+                    Text(
+                        text = "${service.uuid}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 14.sp
+
+                    )
+                }
             }
         }
         Button(

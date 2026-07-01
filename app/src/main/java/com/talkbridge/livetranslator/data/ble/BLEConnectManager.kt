@@ -21,15 +21,23 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 sealed class BLEEvent {
     object BluetoothUnavailable : BLEEvent()
     data class DeviceConnected(val bleDevice: BLEDevice) : BLEEvent()
+    data class ServicesDiscovered(val bleDevice: BLEDevice) : BLEEvent()
     object DeviceDisconnected : BLEEvent()
     data class DeviceFound(val bleDevice: BLEDevice) : BLEEvent()
+
+    data class BatteryLevelRead(val level: Int): BLEEvent()
+
+    object ScanStopped: BLEEvent()
 
     data class ConnectionInfo(val info: String): BLEEvent()
 }
@@ -44,6 +52,8 @@ class BLEConnectManager(private val context: Context) {
     private val SCAN_PERIOD: Long = 10000
     private val handler = Handler(Looper.getMainLooper())
 
+    private val _connectedDevice = MutableStateFlow<BLEDevice?>(null)
+    val connectedDevice: StateFlow<BLEDevice?> = _connectedDevice.asStateFlow()
 
     private val _events = MutableSharedFlow<BLEEvent>(
         extraBufferCapacity = 32,
@@ -63,9 +73,16 @@ class BLEConnectManager(private val context: Context) {
 
             // Events vom Service weiterreichen
             eventJob = CoroutineScope(Dispatchers.Main).launch {
-                bleService?.events?.collect {
-                    Log.d("BLEConnect", "Manager relaying event: $it")
-                    _events.emit(it)
+                bleService?.events?.collect { event ->
+                    when (event) {
+                        is BLEEvent.DeviceConnected -> _connectedDevice.value = event.bleDevice
+                        is BLEEvent.ServicesDiscovered -> _connectedDevice.value = event.bleDevice
+                        is BLEEvent.BatteryLevelRead -> _connectedDevice.value = _connectedDevice.value?.copy(batteryLevel = event.level)
+                        is BLEEvent.DeviceDisconnected -> _connectedDevice.value = null
+                        else -> {}
+                    }
+                    Log.d("BLEConnect", "Manager relaying event: $event")
+                    _events.emit(event)
                 }
             }
         }
@@ -96,6 +113,7 @@ class BLEConnectManager(private val context: Context) {
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun connect(device: BluetoothDevice) {
         stopScan()
+        _events.tryEmit(BLEEvent.ScanStopped)
         Log.d("BLEConnect", "connect() called, bleService=$bleService")
         bleService?.connect(device)
     }
@@ -106,8 +124,8 @@ class BLEConnectManager(private val context: Context) {
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    fun writeCharacteristic(data: ByteArray) {
-        bleService?.writeCharacteristic(data)
+    fun writeTextCharacteristic(data: ByteArray) {
+        bleService?.writeTextCharacteristic(data)
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
@@ -124,6 +142,7 @@ class BLEConnectManager(private val context: Context) {
 
         handler.postDelayed({
             scanning = false
+            _events.tryEmit(BLEEvent.ScanStopped)
             bluetoothLeScanner?.stopScan(bleScanCallback)
         }, SCAN_PERIOD)
     }
@@ -142,7 +161,16 @@ class BLEConnectManager(private val context: Context) {
             Log.d("BLEConnect scan result", result.toString())
             super.onScanResult(callbackType, result)
             if (result.isConnectable){
-                _events.tryEmit(BLEEvent.DeviceFound(BLEDevice(result.device, result.device.name ?: "Unnamed", result.device.address, result.rssi)))
+                _events.tryEmit(
+                    BLEEvent.DeviceFound(
+                        BLEDevice(
+                            device = result.device,
+                            name = result.device.name ?: "Unnamed",
+                            address = result.device.address,
+                            rssi = result.rssi
+                        )
+                    )
+                )
             }
         }
     }

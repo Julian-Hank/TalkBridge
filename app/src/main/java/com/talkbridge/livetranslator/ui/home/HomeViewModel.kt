@@ -12,6 +12,7 @@ import com.talkbridge.livetranslator.data.SERVER_RESPONSE
 import com.talkbridge.livetranslator.data.TalkBridgeClient
 import com.talkbridge.livetranslator.data.TalkBridgeForegroundService
 import com.talkbridge.livetranslator.data.audio.AudioRecorder
+import com.talkbridge.livetranslator.data.ble.BLEConnectManager
 import com.talkbridge.livetranslator.data.languagecodeToLanguageObject
 import com.talkbridge.livetranslator.data.repository.PreferenceKeys
 import com.talkbridge.livetranslator.data.repository.UserPreferencesRepository
@@ -28,7 +29,8 @@ private const val TAG: String = "HomeViewModel"
 class HomeViewModel(
     application: Application,
     private val talkBridgeClient: TalkBridgeClient,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val bleConnectManager: BLEConnectManager
 ): AndroidViewModel(application) {
     private val context = getApplication<Application>()
     private val audioRecorder = AudioRecorder()
@@ -222,9 +224,16 @@ class HomeViewModel(
                         current.add(TranslationEntry(original = text))
                     }
                 }
+//                if (!sendTranslatedText){
+//
+//                }
+                bleConnectManager.writeTextCharacteristic(text.toByteArray())
             }
             SERVER_RESPONSE.TRANSLATED -> {
                 current[current.lastIndex] = lastEntry!!.copy(translated = text)
+//                if (sendTranslatedText){
+//
+//                }
             }
         }
 

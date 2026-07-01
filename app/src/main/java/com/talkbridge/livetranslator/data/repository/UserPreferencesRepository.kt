@@ -159,18 +159,18 @@ class UserPreferencesRepository(
                 preferences[PreferenceKeys.USE_BETTER_TRANSLATION] ?: true
             }
 
-//    val useBetterVAD: Flow<Boolean> =
-//        dataStore.data
-//            .catch {
-//                if (it is IOException) {
-//                    emit(emptyPreferences())
-//                } else {
-//                    throw it
-//                }
-//            }
-//            .map { preferences ->
-//                preferences[PreferenceKeys.USE_BETTER_VAD] ?: true
-//            }
+    val sendTranslatedText: Flow<Boolean> =
+        dataStore.data
+            .catch {
+                if (it is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw it
+                }
+            }
+            .map { preferences ->
+                preferences[PreferenceKeys.SEND_TRANSLATED_TEXT] ?: false
+            }
 
     val stopOnAppClose: Flow<Boolean> =
         dataStore.data
@@ -201,13 +201,13 @@ class UserPreferencesRepository(
         }
     }
 
-//    suspend fun setUseBetterVAD(
-//        value: Boolean
-//    ){
-//        dataStore.edit { preferences ->
-//            preferences[PreferenceKeys.USE_BETTER_VAD] = value
-//        }
-//    }
+    suspend fun setSendTranslatedText(
+        value: Boolean
+    ){
+        dataStore.edit { preferences ->
+            preferences[PreferenceKeys.SEND_TRANSLATED_TEXT] = value
+        }
+    }
 
     suspend fun setStopOnAppClose(
         value: Boolean
@@ -275,7 +275,7 @@ object PreferenceKeys {
     val CUSTOM_IP_ADDRESS = stringPreferencesKey("custom_ip_address")
 
     val USE_BETTER_TRANSLATION = booleanPreferencesKey("use_better_translation")
-//    val USE_BETTER_VAD = booleanPreferencesKey("use_better_vad")
+    val SEND_TRANSLATED_TEXT = booleanPreferencesKey("send_translated_text") //to esp32, default = false -> send original (transcribed) text
 
     val STOP_ON_APP_CLOSE = booleanPreferencesKey("stop_on_app_close")
 }

@@ -21,7 +21,8 @@ object AppViewModelProvider {
             HomeViewModel(
                 application = talkBridgeApplication(),
                 userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository,
-                talkBridgeClient = talkBridgeApplication().container.talkBridgeClient
+                talkBridgeClient = talkBridgeApplication().container.talkBridgeClient,
+                bleConnectManager = talkBridgeApplication().container.bleConnectManager
             )
         }
         initializer {
@@ -57,7 +58,8 @@ object AppViewModelProvider {
         }
         initializer {
             ConnectViewModel(
-                bleConnectManager = talkBridgeApplication().container.bleConnectManager
+                bleConnectManager = talkBridgeApplication().container.bleConnectManager,
+                userPreferencesRepository = talkBridgeApplication().container.userPreferencesRepository
             )
         }
     }

@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothProfile
 import android.content.Intent
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresPermission
@@ -23,12 +24,19 @@ class BLEService : Service() {
     companion object {
         private val SERVICE_UUID = UUID.fromString("def5dd34-cdc6-4555-bc4f-eadff20b57b5")           //  ESP32 Service UUID
         private val TEXT_CHARACTERISTIC_UUID = UUID.fromString("3a768f0d-dfe3-4325-90bf-8b0d792884cf")
+
+        private val BATTERY_SERVICE_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
+        private val BATTERY_LEVEL_CHARACTERISTIC_UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
+
     }
 
     private var bluetoothGatt: BluetoothGatt? = null
     private var bluetoothAdapter: BluetoothAdapter? = null
 
     private var textCharacteristic: BluetoothGattCharacteristic? = null
+
+    private var batteryCharacteristic: BluetoothGattCharacteristic? = null
+
     private val binder = LocalBinder()
 
     private val _events = MutableSharedFlow<BLEEvent>(
@@ -75,11 +83,29 @@ class BLEService : Service() {
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    fun writeCharacteristic(data: ByteArray) {
+    fun writeTextCharacteristic(data: ByteArray) {
         val gatt = bluetoothGatt ?: return
         val characteristic = textCharacteristic ?: return
-        characteristic.value = data
-        gatt.writeCharacteristic(characteristic)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val result = gatt.writeCharacteristic(
+                characteristic,
+                data,
+                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            )
+            Log.d("BLEConnect", "writeCharacteristic result: $result")
+        } else {
+            @Suppress("DEPRECATION")
+            characteristic.value = data
+            @Suppress("DEPRECATION")
+            val success = gatt.writeCharacteristic(characteristic)
+            Log.d("BLEConnect", "writeCharacteristic success: $success")
+        }
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun readCharacteristic(characteristic: BluetoothGattCharacteristic) {
+        bluetoothGatt?.readCharacteristic(characteristic)
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
@@ -118,7 +144,7 @@ class BLEService : Service() {
                 gatt?.close()
                 bluetoothGatt = null
                 val statusDescription = when (status) {
-                    8 -> "Nicht autorisiert (GATT AUTHEN)"
+                    8 -> "Nicht autorisiert"
                     13 -> "Ungültige Attribut-Länge"
                     15 -> "Ungenügende Verschlüsselung"
                     19 -> "Verbindung vom Gerät beendet (Timeout/Entfernung)"
@@ -130,23 +156,58 @@ class BLEService : Service() {
                     else -> "Unbekannter Fehler ($status)"
                 }
 
-                _events.tryEmit(BLEEvent.ConnectionInfo("Verbindung fehlgeschlagen mit status: $status: \n $statusDescription"))
+                _events.tryEmit(BLEEvent.ConnectionInfo("Fehlgeschlagen - status: $status: $statusDescription"))
                 _events.tryEmit(BLEEvent.DeviceDisconnected)
                 // _events.tryEmit(BLEEvent.ConnectionFailed)
                 return
             }
         }
 
+        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 _events.tryEmit(BLEEvent.DeviceDisconnected)
                 return
             }
-            textCharacteristic = gatt?.getService(SERVICE_UUID)
+            val device = gatt?.device ?: return
+            val services = gatt.services ?: emptyList()
+
+            textCharacteristic = gatt.getService(SERVICE_UUID)
                 ?.getCharacteristic(TEXT_CHARACTERISTIC_UUID)
 
-            if (textCharacteristic == null) {
-                // Service/Characteristic nicht gefunden -> TODO BLEEvent.Error / BLEEvent.ConnectionFailed definieren
+            batteryCharacteristic = gatt.getService(BATTERY_SERVICE_UUID)
+                ?.getCharacteristic(BATTERY_LEVEL_CHARACTERISTIC_UUID)
+            if (batteryCharacteristic != null) {
+                gatt.readCharacteristic(batteryCharacteristic)
+            }
+
+            _events.tryEmit(
+                BLEEvent.ServicesDiscovered(
+                    BLEDevice(
+                        device = device,
+                        services = services,
+                        batteryLevel = if (batteryCharacteristic == null) null else 0,
+                        isTalkBridgeCompatible = textCharacteristic != null,
+                        name = device.name ?: "Unnamed",
+                        address = device.address,
+                        rssi = 0
+                    )
+                )
+            )
+        }
+
+        override fun onCharacteristicRead(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray,
+            status: Int
+        ) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d("BLEConnect", "Read ${characteristic.uuid}: ${value.joinToString()}")
+                if (characteristic.uuid == BATTERY_LEVEL_CHARACTERISTIC_UUID) {
+                    val batteryLevel = value.firstOrNull()?.toInt() ?: return
+                    _events.tryEmit(BLEEvent.BatteryLevelRead(level = batteryLevel))
+                }
             }
         }
     }

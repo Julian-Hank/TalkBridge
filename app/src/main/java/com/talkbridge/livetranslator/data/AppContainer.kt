@@ -15,11 +15,8 @@ interface AppContainer {
     val translationHistoryItemsRepository: TranslationHistoryItemsRepository
     val userPreferencesRepository: UserPreferencesRepository
     val talkBridgeClient: TalkBridgeClient
-
     val transcribeRecordingAudioFlow: MutableSharedFlow<ByteArray>
-
     val connectivityObserver: ConnectivityObserver
-
     val bleConnectManager: BLEConnectManager
 }
 
