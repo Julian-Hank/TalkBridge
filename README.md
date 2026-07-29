@@ -19,11 +19,12 @@ The app has four main screens accessible via a bottom navigation bar, plus addit
 | **Home** (Live Translate) | Real-time translation via WebSocket. Select source/target language, tap start, speak — translated audio plays back automatically. |
 | **Translate** | Text-based translation. Type in the source field; translation appears after a 500ms debounce delay. |
 | **Transcribe** | Record audio locally, then send it to the server for transcription. Supports pause/resume, waveform visualization, and auto language detection. Saves results to local history. |
-| **Face to Face / Conversation** | Placeholder screen (in development). |
 | **Settings** | Configure a custom server IP address, persisted via DataStore. |
 | **Language Select** | Shared screen for picking source or target language, reachable from Home, Translate, and Transcribe. Shows recently used languages on the Home flow. |
 | **Transcription Detail** | View a saved transcription item. |
 | **Transcription History** | Browse and delete saved transcription items. |
+| **BLE Connect** | Connect to a BLE Device to send the transcribed / translated text to |
+
 
 ---
 
@@ -41,7 +42,7 @@ The app has four main screens accessible via a bottom navigation bar, plus addit
 - **Language selection** with recently used languages (persisted, up to 4 entries)
 - **Custom server IP** configurable in Settings, persisted via DataStore
 - **Local history** for transcription results stored in a Room database
-- **Translation history** not finished (in development)
+- **BLE connect** to connect BLE Device 
 
 ---
 
@@ -68,9 +69,13 @@ com.talkbridge.livetranslator/
 │   ├── TalkBridgeDatabase.kt         # Room database definition
 │   ├── Language.kt                   # Language enum
 │   ├── AppContainer.kt               # Dependency injection container
+│   ├── ConnectivityObserver.kt       # Checks if Wifi is available
 │   ├── audio/
 │   │   ├── AudioRecorder.kt          # Mic capture (PCM 16-bit, 16kHz)
 │   │   └── AudioOutputManager.kt     # TTS audio playback
+│   ├── ble/
+│   │   ├── BLEConnectManager.kt      
+│   │   └── BleService.kt     
 │   ├── local/
 │   │   ├── dao/
 │   │   │   ├── TranscriptionItemDao.kt
@@ -114,7 +119,7 @@ com.talkbridge.livetranslator/
 
 ### Server IP Configuration
 
-The default fallback IP in `TalkBridgeClient.kt` is `192.168.68.53`. To use a different server, enter its IP address in the app's **Settings** screen. The value is persisted via DataStore and used automatically for all WebSocket and HTTP requests.
+The default fallback IP in `TalkBridgeClient.kt` is `192.168.68.57` on Port `8080`. To use a different server, enter its IP address and Port in the app's **Settings** screen. The value is persisted via DataStore and used automatically for all WebSocket and HTTP requests.
 
 ### Permissions Required
 
