@@ -42,6 +42,8 @@ class HomeViewModel(
 
     private var stopOnAppClose = false
 
+    private var sendTranslatedText = false
+
     init {
         observePreferences()
         observeClientEvents()
@@ -49,33 +51,30 @@ class HomeViewModel(
 
     private fun observePreferences() {
         viewModelScope.launch {
-            userPreferencesRepository.currentLiveSourceLanguage
-                .combine(userPreferencesRepository.currentLiveTargetLanguage) { source, target ->
-                    source to target
-                }
-                .combine(userPreferencesRepository.recentLiveLanguages) { pair, recent ->
-                    Triple(pair.first, pair.second, recent)
-                }
-                .combine(userPreferencesRepository.stopOnAppClose) { triple, stopOnClose ->
-                    Pair(triple, stopOnClose)
-                }
-                .collect { (triple, stopOnClose) ->
-                    val (source, target, recent) = triple
+            combine(
+                userPreferencesRepository.currentLiveSourceLanguage,
+                userPreferencesRepository.currentLiveTargetLanguage,
+                userPreferencesRepository.recentLiveLanguages,
+                userPreferencesRepository.stopOnAppClose,
+                userPreferencesRepository.sendTranslatedText
+            ) { source, target, recent, stopOnClose, sendTranslatedText ->
+                PreferencesState(source, target, recent, stopOnClose, sendTranslatedText)
+            }.collect { state ->
+                stopOnAppClose = state.stopOnClose
+                sendTranslatedText = state.sendTranslatedText
 
-                    stopOnAppClose = stopOnClose
-
-                    val recentLanguages = recent.map { languagecode ->
-                        languagesMap.getValue(languagecodeToLanguageObject(languagecode))
-                    }
-
-                    _homeUiState.update { currentState ->
-                        currentState.copy(
-                            sourceLanguage = languagesMap.getValue(languagecodeToLanguageObject(source)),
-                            targetLanguage = languagesMap.getValue(languagecodeToLanguageObject(target)),
-                            recentLanguages = recentLanguages
-                        )
-                    }
+                val recentLanguages = state.recent.map { languagecode ->
+                    languagesMap.getValue(languagecodeToLanguageObject(languagecode))
                 }
+
+                _homeUiState.update { currentState ->
+                    currentState.copy(
+                        sourceLanguage = languagesMap.getValue(languagecodeToLanguageObject(state.source)),
+                        targetLanguage = languagesMap.getValue(languagecodeToLanguageObject(state.target)),
+                        recentLanguages = recentLanguages
+                    )
+                }
+            }
         }
     }
 
@@ -224,16 +223,15 @@ class HomeViewModel(
                         current.add(TranslationEntry(original = text))
                     }
                 }
-//                if (!sendTranslatedText){
-//
-//                }
-                bleConnectManager.writeTextCharacteristic(text.toByteArray())
+                if (!sendTranslatedText){
+                    bleConnectManager.writeTextCharacteristic(text.toByteArray())
+                }
             }
             SERVER_RESPONSE.TRANSLATED -> {
                 current[current.lastIndex] = lastEntry!!.copy(translated = text)
-//                if (sendTranslatedText){
-//
-//                }
+                if (sendTranslatedText){
+                    bleConnectManager.writeTextCharacteristic(text.toByteArray())
+                }
             }
         }
 
@@ -305,6 +303,14 @@ class HomeViewModel(
         }
     }
 }
+
+private data class PreferencesState(
+    val source: String,
+    val target: String,
+    val recent: List<String>,
+    val stopOnClose: Boolean,
+    val sendTranslatedText: Boolean
+)
 
 data class HomeUiState(
     val connectionState: ConnectionState = ConnectionState.NOT_CONNECTED,
